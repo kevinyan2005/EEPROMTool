@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="Monteris.Common.targets"/>
+  
+  <Target Name="UpdateVersionAssemblyInfo">
+    <!-- Update the version meta-data in a C# AssemblyInfo file
+         Caller must define 
+         Property: PartVersion as dot-separated version string, with up to 4 parts (a.b.c.d)
+         ItemGroup: AssemblyInfoFiles list of AssemblyInfo files to modify
+    -->
+    <PropertyGroup>
+      <CopyrightYear>$([System.DateTime]::Now.ToString("yyyy"))</CopyrightYear>
+    </PropertyGroup>
+    <Attrib ReadOnly="false" Files="@(AssemblyInfoFiles)" />
+    <FileUpdate Files="@(AssemblyInfoFiles)"
+                Regex='\[assembly: AssemblyVersion\(".*"\)\]'
+                ReplacementText='[assembly: AssemblyVersion("$(PartVersion)")]'
+                WarnOnNoUpdate='true' />
+    <FileUpdate Files="@(AssemblyInfoFiles)"
+                Regex='\[assembly: AssemblyFileVersion\(".*"\)\]'
+                ReplacementText='[assembly: AssemblyFileVersion("$(PartVersion)")]'
+                WarnOnNoUpdate='true' />
+    <FileUpdate Files="@(AssemblyInfoFiles)"
+                Regex='\[assembly: AssemblyCopyright\(".*"\)\]'
+                ReplacementText='[assembly: AssemblyCopyright("Copyright © $(CopyrightYear) Monteris Medical, Inc. All rights reserved")]'
+                WarnOnNoUpdate='true' />
+  </Target>
+
+  <Target Name="TestNUnit3" DependsOnTargets="Build">
+    <NUnit3 Assemblies="@(TestAssemblies3)"
+            ToolPath="$(NUnit3BinDir)"
+            OutputXmlFile="TestResult.xml;format=nunit2" />
+  </Target>
+
+  <Target Name="TestNUnit3WithCoverage" DependsOnTargets="Build">
+    <Exec Command="$(OpenCoverCommand) -target:$(NUnit3Command) -targetargs:&quot;@(TestAssemblies3, ' ') $(NUnit3AdditionalArgs) -result=TestResult.xml;format=nunit2&quot;"/>
+    <Exec Command='$(ReportGenCommand) -reports:Coverage.xml -targetDir:"$(ReportsDir)\OpenCover" ' />
+  </Target>
+</Project>

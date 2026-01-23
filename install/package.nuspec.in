@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>@PartId@</id>
+        <version>@PartVersion@</version>
+        <title>@PartName@</title>
+        <authors>Monteris Medical Inc.</authors>
+        <owners>Monteris Medical Inc.</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>@PartDescription@</description>
+        <copyright>Copyright © 2025 Monteris Medical Inc.</copyright>
+    </metadata>
+    <files>
+        <file src="..\OneWireEEPROMWpfApp\bin\@Configuration@\**\*.*" target="native\OneWireEEPROMWpfApp\bin\@Configuration@" />
+        <file src="partInfo.iss" target="native\install" />
+        <file src="partLevel.iss" target="native\install" />
+    </files>
+</package>

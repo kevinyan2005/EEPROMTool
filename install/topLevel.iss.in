@@ -1,0 +1,26 @@
+#define partPublisher "Monteris Medical, Inc"
+#define partURL "http://www.monteris.com/"
+#define partNumber "@PartNumber@"
+#define partName "@PartName@"
+#define partVersion "@PartVersion@"
+
+#define rootDir ""
+#define partComponent ""
+#define defaultDir "C:\mmi_devtools\OneWire EEPROM Test Tool"
+#define installDir "{app}"
+
+[Setup]
+AppId={{@PartGUID@}
+AppName={#partName}
+AppVersion={#partVersion}
+DefaultDirName={#defaultDir}
+DefaultGroupName={#partName}
+AllowNoIcons=yes
+OutputBaseFilename={#partNumber}-{#partVersion} Rev A - Setup
+OutputDir=.
+WizardImageFile="..\Build\Installer\images\installImage.bmp"
+DisableProgramGroupPage=yes
+SetupLogging=yes
+Uninstallable=no
+
+#include "./partLevel.iss"

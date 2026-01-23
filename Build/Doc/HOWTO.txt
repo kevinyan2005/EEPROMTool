@@ -1,0 +1,23 @@
+MMI Doxygen template V1.1.0
+---------------------------
+To Create a new documentation from this template:
+
+- Copy Doxyfile.in to directory "Doc" in your source project's root.
+
+- Review and eventually edit/update:
+	-Doxygen configuration file (Doxyfile.in) project-specific tags like :
+		PROJECT_NAME = <you_project_name> (defaults to msbuild proj file tags)
+		INPUT = <space separated list of subdirectories, could be only one if you override the recusive search flag)
+		RECURSIVE = YES (default can be NO if needed on some projects)
+		
+Note that with  extra tools like ghostscript, it is also possible to generate PDF documents from the LATEX ouput. 
+Latex(resp. Doxybook) options are currently disabled.
+
+- Modify your source project's .proj file:
+  - Add Doxyfile.in substitution (generates "Doxyfile" from "Doxyfile.in")
+
+       <SubstituteInstallerInfoFiles Include="$(DocDir)\Doxyfile.in"/>
+
+  - Change Document target to depend on RunDoxygen
+
+       <Target Name="Document" DependsOnTargets="RunDoxygen" />

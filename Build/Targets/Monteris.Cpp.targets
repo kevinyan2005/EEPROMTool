@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="Monteris.Common.targets"/>
+
+  <Target Name="UpdateVersionCppResource">
+    <!-- Update version meta-data in a C++ resource file.
+         Caller must define
+         Property: PartVersion as dot-separated version string, with up to 4 parts (a.b.c.d)
+         ItemGroup: CppResourceFiles list of resource files to modify
+    -->
+    <PropertyGroup>
+      <PartVersionQuad>$(PartVersion.Replace('.',','))</PartVersionQuad>
+    </PropertyGroup>
+
+    <Attrib ReadOnly="false" Files="@(CppResourceFiles)" />
+    <FileUpdate Files="@(CppResourceFiles)"
+                Regex="FILEVERSION\s+\S+"
+                ReplacementText="FILEVERSION $(PartVersionQuad)"
+                Encoding="Windows-1252"
+                WarnOnNoUpdate='true' />
+    <FileUpdate Files="@(CppResourceFiles)"
+                Regex="PRODUCTVERSION\s+\S+"
+                ReplacementText="PRODUCTVERSION $(PartVersionQuad)"
+                Encoding="Windows-1252"
+                WarnOnNoUpdate='true' />
+    <FileUpdate Files="@(CppResourceFiles)"
+                Regex='VALUE\s+"FileVersion",\s*".*"' 
+                ReplacementText='VALUE "FileVersion", "$(PartVersion)"'
+                Encoding="Windows-1252"
+                WarnOnNoUpdate='true' />
+    <FileUpdate Files="@(CppResourceFiles)"
+                Regex='VALUE\s+"ProductVersion",\s*".*"'
+                ReplacementText='VALUE "ProductVersion", "$(PartVersion)"'
+                Encoding="Windows-1252"
+                WarnOnNoUpdate='true' />
+  </Target>
+
+</Project>

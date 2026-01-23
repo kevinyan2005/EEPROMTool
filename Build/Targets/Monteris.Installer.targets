@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- Overview of Installer Creation
+  
+       Monteris has two flavours of installers: those that install a "leaf" part, and those that aggregate
+       many "leaf" parts into one "super-installer".  As a typical example: the PHI Tool is a leaf part with
+       an installer, while the Verification Tool Suite is an aggregate installer containing the PHI Tool and 
+       several other tools.  The Main PC installer is another example of an installer for an aggregate of
+	   many parts.
+	   
+	   Note: each part intended for use by an aggregate installer must produce a Nuget package with
+	   the files to install, and several INNO script file fragments.  The Nuget package ID conventionally
+	   uses the suffix ".install"; e.g. mmi.rtt.ge.interface.install.
+	   
+	   packages.config Files
+	   =====================
+	   For a simple leaf installer, the packages.config file is the standard Nuget config file.  For an
+	   aggregate installer, however, the packages.config file contains extra nodes used to build the final
+	   INNO script.  For each package that is to be included in the installer (i.e. not a build-time
+	   dependency only), the <package> node contains the following nodes:
+
+	   <installTo>
+	   - required node that describes where the content of that package is to be installed
+	   
+	   <shortcut>
+	   - optional node that describes where a shortcut is created
+	   
+	   <types>
+	   - optional node that lists the installer types that will install the specified package
+	   - must be a subset of the types defined in toplevel.iss
+	   
+
+	   INNO Script Files
+	   =================
+       In order to facilitate combining many parts into one installer, we break up the INNO installer script
+	   for one part into several separate files:
+	   
+	   $(InstallFolder)/topLevel.iss 
+	   - only required in a part that builds an installer
+	   - the file on which the INNO compiler is run 
+	   - must include the [Setup] section
+	   - must #include "partLevel.iss"
+	   
+	   $(InstallFolder)/partInfo.iss
+	   - required for any part that contributes files to an installer (whether leaf or aggregate)
+	   - contains defines such as partNumber, partName, and partVersion; other defines as needed
+	   
+	   $(InstallFolder)/partLevel.iss
+	   - required for any part that contributes files to an installer (whether leaf or aggregate)
+	   - typically contains a [Files] section, may contain others such as [Tasks], [Run], etc
+	   - when target MakeISS is run on an aggregate installer, the following is appended for each contained part:
+	     - #include statements for partInfo.iss and partLevel.iss
+		 - boilerplate defines based on <installTo> and <types>
+		 - an [Icons] section if <shortcut> is defined
+
+
+		
+		Usage for Part that contributes files to an installer
+		=====================================================
+		1. Generate partInfo.iss and partLevel.iss files; typically by writing ".in"
+		   counterparts and putting the ".in" files on item list @SubstituteInstallerInfoFiles and
+		   calling target SubstituteInstallerInfo.
+		2. All the files to be installed, including the .iss files, must be packed in the ".install"
+		   Nuget file.  This includes all dependencies that are to be installed within the same
+		   <installTo> location.
+		   
+		Usage for Part that generates an installer
+		==========================================
+		1. Generate partInfo.iss and partLevel.iss files; typically by writing ".in"
+		   counterparts and putting the ".in" files on item list @SubstituteInstallerInfoFiles and
+		   calling target SubstituteInstallerInfo.
+		2. All packages to be installed must be listed in packages.config, with <installTo> and other
+		   optional nodes as described above.  Set item group @(NugetPackagesFiles) to the list of
+		   packages.config files to process.  Set property $(PackagesDir) to the location of the unpacked
+		   packages.
+		3. Call target BuildInstaller.
+		
+   -->
+
+  <Target Name="FindPackages">
+  <!-- Search a list of packages.config files defined in item group @(NugetPackagesFiles) and extract all package IDs found.
+       Place the resulting list into item group @RawPropertyIDs. -->
+      <XmlPeek Condition="'@(NugetPackagesFiles)' != ''" XmlInputPath="%(NugetPackagesFiles.Identity)" Query="//package/@id"> <Output TaskParameter="Result" ItemName="RawPropertyIDs" /> </XmlPeek>
+  </Target>
+
+  <Target Name="FindFiles" Inputs="@RawPropertyIDs" Outputs="%(RawPropertyIDs.Identity)" DependsOnTargets="FindPackages;NugetRestore">
+  <!-- Search a list of packages.config files defined in item group @(NugetPackagesFiles) and extract information required to
+       generate an installer from partInfo.iss and partLevel.iss files.  
+       Place the resulting list into item group @RawPropertyIDs. 
+   -->
+      <PropertyGroup>
+        <CurrentPropertyID>%(RawPropertyIDs.Identity)</CurrentPropertyID>
+      </PropertyGroup>
+
+      <XmlPeek XmlInputPath="%(NugetPackagesFiles.Identity)" Query="//package[@id='$(CurrentPropertyID)']/@version"> <Output TaskParameter="Result" PropertyName="RawPropertyVersion" /> </XmlPeek>
+      <XmlPeek XmlInputPath="%(NugetPackagesFiles.Identity)" Query="//package[@id='$(CurrentPropertyID)']/types/text()"> <Output TaskParameter="Result" PropertyName="partTypes" /> </XmlPeek>
+      <XmlPeek XmlInputPath="%(NugetPackagesFiles.Identity)" Query="//package[@id='$(CurrentPropertyID)']/shortcut/text()"> <Output TaskParameter="Result" PropertyName="partShortcut" /> </XmlPeek>
+      <XmlPeek XmlInputPath="%(NugetPackagesFiles.Identity)" Query="//package[@id='$(CurrentPropertyID)']/installTo/text()"> <Output TaskParameter="Result" PropertyName="partInstallTo" /> </XmlPeek>
+
+    <ItemGroup>
+        <PartFolders Condition="'%(RawPropertyIDs.Identity)'=='$(CurrentPropertyID)' AND '$(partInstallTo)'!=''" Include="$(PackagesDir)\$(CurrentPropertyID).$(RawPropertyVersion)\native\" />
+    </ItemGroup>
+
+      <ItemGroup>
+        <PartFolders Condition="'%(PartFolders.Identity)'=='$(PackagesDir)\$(CurrentPropertyID).$(RawPropertyVersion)\native\'">
+          <PartTypes Condition="'$(partTypes)'!=''">$(partTypes)</PartTypes>
+          <PartShortcut Condition="'$(partShortcut)'!=''">$(partShortcut)</PartShortcut>
+          <PartInstallTo Condition="'$(partInstallTo)'!=''">$(partInstallTo)</PartInstallTo>
+        </PartFolders>
+      </ItemGroup>
+
+  </Target>
+
+  <Target Name="SubstituteInstallerInfo">
+  <!-- Generate output file from input template, substituting installer information.
+       Caller must define itemgroup SubstituteInstallerInfoFiles: a list of files that each end with ".in".
+       A new file is created (without the trailing ".in") with contents copied and installer info
+       substituted.
+  -->
+
+    <RegexReplace Input="@(SubstituteInstallerInfoFiles)" Expression=".in$" Replacement="">
+      <Output ItemName="SubstituteInstallerInfoFilesOut" TaskParameter="Output"/>
+    </RegexReplace>
+
+    <Copy SourceFiles="@(SubstituteInstallerInfoFiles)" DestinationFiles="@(SubstituteInstallerInfoFilesOut)" OverwriteReadOnlyFiles="True" />
+
+    <FileUpdate Condition="'$(PartVersion)'!=''" Files="@(SubstituteInstallerInfoFilesOut)" Regex="@PartVersion@"   ReplacementText="$(PartVersion)" />
+    <FileUpdate Condition="'$(PartNumber)'!=''" Files="@(SubstituteInstallerInfoFilesOut)" Regex="@PartNumber@"    ReplacementText="$(PartNumber)" />
+    <FileUpdate Condition="'$(PartName)'!=''" Files="@(SubstituteInstallerInfoFilesOut)" Regex="@PartName@"      ReplacementText="$(PartName)" />
+    <FileUpdate Condition="'$(PartExe)'!=''" Files="@(SubstituteInstallerInfoFilesOut)" Regex="@PartExe@"      ReplacementText="$(PartExe)" />
+    <FileUpdate Condition="'$(PartGUID)'!=''" Files="@(SubstituteInstallerInfoFilesOut)" Regex="@PartGUID@"      ReplacementText="$(PartGUID)" />
+    <FileUpdate Condition="'$(Configuration)'!=''" Files="@(SubstituteInstallerInfoFilesOut)" Regex="@Configuration@" ReplacementText="$(Configuration)" />
+    <FileUpdate Condition="'$(PartDescription)'!=''" Files="@(SubstituteInstallerInfoFilesOut)" Regex="@PartDescription@" ReplacementText="$(PartDescription)" />
+    <FileUpdate Condition="'$(PartId)'!=''" Files="@(SubstituteInstallerInfoFilesOut)" Regex="@PartId@"        ReplacementText="$(PartId)" />
+
+	<!-- Backwards compatibility for tools that don't yet have a PartId -->
+	<Warning Condition="'$(PartId)'==''" Text="PartId is not defined -- will be generated.  Update the project to define a PartId item."/>
+    <FileUpdate Condition="'$(PartId)'==''" Files="@(SubstituteInstallerInfoFilesOut)" Regex="@PartId@"        ReplacementText="$([System.String]::Copy('$(PartNumber)').Replace('-',''))_$([System.String]::Copy('$(PartName)').Replace(' ','_'))" />
+
+  </Target>
+
+  <Target Name="MakeIss" Inputs="@PartFolders" Outputs="%(PartFolders.Identity)" DependsOnTargets="FindFiles">
+  <!-- Appends info from each installer fragment into the partLevel.iss file that is included from "topLevel.iss" to create an installer. -->
+
+    <PropertyGroup>
+      <CurrentPropertyDir>%(PartFolders.RelativeDir)</CurrentPropertyDir>
+      <CurrentPropertyShortcut>%(PartFolders.PartShortcut)</CurrentPropertyShortcut>
+      <CurrentPropertyTypes>%(PartFolders.PartTypes)</CurrentPropertyTypes>
+      <CurrentPropertyInstallTo>%(PartFolders.PartInstallTo)</CurrentPropertyInstallTo>
+    </PropertyGroup>
+
+    <Message Text="$(CurrentPropertyTypes)"/>
+
+    <!-- Reset -->
+    <WriteLinesToFile
+        Condition="'$(CurrentPropertyDir)'!=''"
+        File="$(InstallFolder)/partLevel.iss"
+        Lines=";#undef topLevel;#undef basePath;#undef partTypes;#undef installDir;#undef partExe;
+               #ifndef baseRootDir;
+               #define baseRootDir &quot;&quot;;
+               #endif;
+               #ifndef baseComponent;
+               #define baseComponent &quot;&quot;;
+               #endif;"
+        Overwrite="false"
+        Encoding="Windows-1252"/>
+
+    <WriteLinesToFile
+        Condition="'$(CurrentPropertyDir)'!=''"
+        File="$(InstallFolder)/partLevel.iss"
+        Lines=";#define basePath &quot;..\$(CurrentPropertyDir)install\&quot;;
+               #define partTypes &quot;$(CurrentPropertyTypes)&quot;;
+               #define baseRootDir rootDir;
+               #define rootDir=rootDir+basePath;
+               #define baseComponent partComponent
+               #include basePath+&quot;partInfo.iss&quot;;
+               #if partComponent != &quot;&quot;;
+                 #define partComponent partComponent + &quot;/S&quot; + StringChange(partNumber, &quot;-&quot;, &quot;&quot;);
+               #else;
+                 #define partComponent &quot;S&quot; + StringChange(partNumber, &quot;-&quot;, &quot;&quot;);
+               #endif;
+               #define installDir $(CurrentPropertyInstallTo);
+               #define iconLocation $(CurrentPropertyShortcut);
+               #if partTypes != &quot;&quot;;
+                 [Components];
+                 Name: &quot;{#partComponent}&quot;%3B Description: &quot;{#partName} {#partNumber}-{#partVersion}&quot;%3B Types: &quot;{#partTypes}&quot;;               
+               #else;
+                 #define partComponent &quot;&quot;;
+               #endif;
+               "
+        Overwrite="false"
+        Encoding="Windows-1252"/>
+
+    <!--If there is an icon specified-->
+    <WriteLinesToFile
+        Condition="'$(CurrentPropertyDir)'!='' AND '$(CurrentPropertyShortcut)'!=''"
+        File="$(InstallFolder)/partLevel.iss"
+        Lines=";[Icons];
+               Name: &quot;{#iconLocation}&quot;%3B Filename: &quot;{#installDir}\{#partExe}&quot;%3B Components: {#partComponent};"
+        Overwrite="false"
+        Encoding="Windows-1252"/>
+
+    <!--Do the include-->
+    <WriteLinesToFile
+        Condition="'$(CurrentPropertyDir)'!=''"
+        File="$(InstallFolder)/partLevel.iss"
+        Lines="#include basePath+&quot;partLevel.iss&quot;;
+                ;#define rootDir baseRootDir;
+                #define partComponent baseComponent"
+        Overwrite="false"
+        Encoding="Windows-1252"/>
+
+  </Target>
+
+  <Target Name="BuildInstaller" DependsOnTargets="NugetRestore;FindFiles;MakeIss">
+  <!-- Builds the installer from $(InstallFolder)\topLevel.iss -->
+    <Exec Command='"$(InnoSetupDir)\tools\iscc" "$(InstallFolder)\topLevel.iss"' />
+  </Target>
+
+  <!-- Not currently used, but intended for use in a multi-level installer.  The idea is to recursively 
+       restore packages, where the output packages directory is in a known location relative to the
+	   input packages.config file.
+
+	   TODO: move into Monteris.Common.targets, extract <NugetRestoreCommonArgs> into global and use
+	   with this and with regular NugetRestore.
+   -->
+  <Target Name="NugetRestoreParts" Inputs="@PartFolders" Outputs="%(PartFolders.Identity)" DependsOnTargets="FindFiles">
+    <PropertyGroup>
+      <NugetFile>%(PartFolders.RelativeDir)install\packages.config</NugetFile>
+      <CurrentRelativeDir>%(PartFolders.RelativeDir)</CurrentRelativeDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <NugetSource Include="\\mmbuild\NuGet\COTS"/>
+      <NugetSource Include="\\mmbuild\NuGet\RC"/>
+      <NugetSource Include="\\mmbuild\NuGet\seed-binzip"/>
+      <NugetSource Include="\\mmbuild\NuGet\seed-COTS"/>
+    </ItemGroup>
+    <PropertyGroup>
+    <NugetRestoreCommonArgs>-verbosity detailed -nocache -source @(NugetSource)</NugetRestoreCommonArgs>
+    </PropertyGroup>
+    <Exec Condition="'$(NugetFile)' != ''" Command='Build\Tools\nuget restore "$(NugetFile)" -verbosity detailed -nocache -source @(NugetSource) -PackagesDirectory $(CurrentRelativeDir)packages'/>
+  </Target>
+
+</Project>

@@ -1,0 +1,4 @@
+#define partNumber "@PartNumber@"
+#define partName "@PartName@"
+#define partVersion "@PartVersion@"
+#define partExe "@PartExe@"

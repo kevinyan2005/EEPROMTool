@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="Monteris.Common.targets"/>
+
+  <!--This assumes that there is a single file that can be run that will compile the IDL code into its .sav file-->
+  <Target Name="BuildIDL">
+
+    <Copy Condition="'@(IdlExtensionFiles)'!=''" SourceFiles="@(IdlExtensionFiles)" DestinationFolder="$(SourceDir)\build.extensions" />
+    <Copy Condition="'@(IdlExtensionFiles)'!='' AND '$(OutputDir)'!=''" SourceFiles="@(IdlExtensionFiles)" DestinationFolder="$(OutputDir)" />
+
+    <Exec Command='$(IDLCommand) "$(SourceDir)\build.pro" -arg "$(SourceDir)"'/>
+  </Target>
+
+</Project>

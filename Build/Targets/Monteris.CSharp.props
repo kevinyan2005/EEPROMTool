@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- This file exists to properties needed for Monteris targets.
+       The properties are conditionally-defined so that they can be overridden in the project file.
+       This file should be included near the top of the project file, after any overriding properies
+       are defined.       
+  -->
+
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">Any CPU</Platform>
+    <BuildDir Condition=" '$(BuildDir)' == '' ">$(SourceDir)\bin\$(Configuration)</BuildDir>
+  </PropertyGroup>
+
+  <Import Project="Monteris.Common.props"/>
+
+  <!-- Open Coverage and ReportGenerator custom properties -->
+  <PropertyGroup>
+    <ReportGenDir     Condition=" '$(ReportGenDir)' == '' ">$(PackagesDir)\ReportGenerator.3.0.2\tools</ReportGenDir>
+    <ReportGenCommand Condition=" '$(ReportGenCommand )' == '' ">"$(ReportGenDir)\ReportGenerator.exe"</ReportGenCommand>
+    <NUnit3BinDir     Condition=" '$(NUnit3BinDir)' == '' ">$(PackagesDir)\NUnit.ConsoleRunner.3.11.1\tools</NUnit3BinDir>
+    <NUnit3Command    Condition=" '$(NUnit3Command )' == '' ">"$(NUnit3BinDir)\nunit3-console.exe"</NUnit3Command>
+    <OpenCoverBinDir  Condition=" '$(OpenCoverBinDir)' == '' ">C:\Program Files (x86)\OpenCover</OpenCoverBinDir>
+    <OpenCoverFilterArgs Condition="'$(OpenCoverFilterArgs)' == ''">+[*]* -[nunit.*]* -[*FluentAssertions*]* -[*peneyes*]* -[*.Test*]*</OpenCoverFilterArgs>
+    <OpenCoverCommand Condition=" '$(OpenCoverCommand)' == '' ">"$(OpenCoverBinDir)\OpenCover.Console.exe" $(OpenCoverAdditionalArgs) -filter:"$(OpenCoverFilterArgs)" -output:Coverage.xml </OpenCoverCommand>
+  </PropertyGroup>
+
+</Project>

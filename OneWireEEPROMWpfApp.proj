@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Package" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <PartName>HCB Test Tool</PartName>    
+    <PartNumber>ST-00239</PartNumber>
+    <PartVersion>1.0.0</PartVersion>
+    <PartGUID>04E353BD-1448-461E-87C1-D6CB74EB6DDA</PartGUID>
+    <PartDescription>A tool used to test the 1-wire EEPROM</PartDescription>
+    <PartExe>OneWireEEPROMWpfApp.exe</PartExe>
+  </PropertyGroup>
+ 
+  <PropertyGroup>    
+    <SourceDir>$(MSBuildProjectDirectory)</SourceDir>
+    <PackagesDir>$(MSBuildProjectDirectory)\packages</PackagesDir>
+  </PropertyGroup>
+
+  <Import Project="Build\Targets\Monteris.CSharp.props"/>
+
+  <ItemGroup>
+    <SolutionFiles Include="$(SourceDir)\OneWireEEPROMWpfApp.sln"/>
+    <AssemblyInfoFiles Include="$(SourceDir)\OneWireEEPROMWpfApp\Properties\AssemblyInfo.cs"/>
+    <NugetFiles Include="install\package.nuspec"/>
+    <SubstituteInstallerInfoFiles Include="$(MSBuildProjectDirectory)\install\*.in" />
+  </ItemGroup>
+
+  <Target Name="Build" DependsOnTargets="NugetRestore;UpdateVersionAssemblyInfo;BuildSolutions"/>
+
+  <Target Name="Test" DependsOnTargets="Build" />
+
+  <Target Name="Document"  DependsOnTargets= "SubstituteInstallerInfo;NugetRestore" >
+    <Exec Command="$(DoxygenCommand) $(DocDir)\Doxyfile" WorkingDirectory="$(DocDir)" />
+  </Target>
+
+  <Target Name="Package" DependsOnTargets="Build;SubstituteInstallerInfo;BuildInstaller;MonterisNugetPack"/>
+  
+  <Import Project="Build\Targets\Monteris.CSharp.targets"/>
+
+</Project>

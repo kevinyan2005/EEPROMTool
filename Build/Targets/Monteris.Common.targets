@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" InitialTargets="PrintBuildVersionInformation">
+
+  <Import Project="MSBuild.Community.Tasks.Targets"/>
+  <Import Project="Monteris.Installer.targets"/>
+
+  <!-- This file defines language-independent targets -->
+  
+  <Target Name="PrintBuildVersionInformation" BeforeTargets="BeforeBuild">
+    <!-- Custom logic or script can go here -->
+    <Message Text="======================================================================" />
+    <Message Text="&#x09;Build Version Information" />
+    <Message Text="----------------------------------------------------------------------" />
+    <Message Text="&#x09;PartName: $(PartName)" />
+    <Message Text="&#x09;PartNumber: $(PartNumber)" />
+    <Message Text="&#x09;Version: $(PartVersion)" />
+    <Message Text="======================================================================" />
+  </Target>
+  
+  <Target Name="BuildSolutions">
+    <MSBuild Projects="@(SolutionFiles)" Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+  </Target>
+
+  <Target Name="NugetRestore">
+    <ItemGroup>
+      <NugetSource Include="http://nuget.mmi.local:5555/v3/index.json"/>
+    </ItemGroup>
+	<PropertyGroup>
+	  <NugetRestoreCommonArgs>-verbosity detailed -nocache -source @(NugetSource)</NugetRestoreCommonArgs>
+	</PropertyGroup>
+    <Exec Condition="'@(SolutionFiles)' != ''" Command='Build\Tools\nuget restore "%(SolutionFiles.Identity)" $(NugetRestoreCommonArgs)'/>
+    <Exec Condition="'@(NugetPackagesFiles)' != ''" Command='Build\Tools\nuget restore "%(NugetPackagesFiles.Identity)" $(NugetRestoreCommonArgs) -PackagesDirectory packages'/>
+  </Target>
+
+  <Target Name="MonterisNugetPack">
+    <!-- Create NuGet packages, using Monteris conventions.
+         Caller must define itemgroup NugetFiles: a list of "source" NuGet files; either
+         a spec file or a csproj file.
+         Caller must define Configuration, Platform, PartNumber, and PartVersion.
+         Note: for Platform=Any CPU, NuGet requires to use "AnyCPU" (no space).
+    -->
+    <PropertyGroup>
+      <NugetPackRelNotes>Build: $(BuildDescription)</NugetPackRelNotes>
+	  <NugetPackSymbols Condition=" '$(NugetPackSymbols)' == '' ">True</NugetPackSymbols>
+      <NugetPlatform>$(Platform)</NugetPlatform>
+      <NugetPlatform Condition=" '$(Platform)' == 'Any CPU' ">AnyCPU</NugetPlatform>
+    </PropertyGroup>
+    <NuGetPack File="%(NugetFiles.Identity)" ToolPath="$(BuildToolsDir)" IncludeReferencedProjects="True" Symbols="$(NugetPackSymbols)" Properties="Configuration=$(Configuration);Platform=$(NugetPlatform);PartNumber=$(PartNumber);PartVersion=$(PartVersion);ReleaseNotes=$(NugetPackRelNotes)"/>
+  </Target>
+
+  <Target Name="SubstituteVersionInfo">
+    <!-- Generate output file from input template, substituting source and version information.
+         Caller must define itemgroup SubstituteVersionFiles: a list of files that each end with ".in".
+         A new file is created (without the trailing ".in") with contents copied and version/build info
+         substituted.
+    -->
+
+    <RegexReplace Input="@(SubstituteVersionFiles)" Expression=".in$" Replacement="">
+      <Output ItemName="SubstituteVersionFilesOut" TaskParameter="Output"/>
+    </RegexReplace>
+
+    <Copy SourceFiles="@(SubstituteVersionFiles)" DestinationFiles="@(SubstituteVersionFilesOut)" OverwriteReadOnlyFiles="True" />
+
+    <FileUpdate Files="@(SubstituteVersionFilesOut)"
+                Regex="@PartVersion@"
+                Encoding="Windows-1252"
+                ReplacementText="$(PartVersion)" />
+    <FileUpdate Files="@(SubstituteVersionFilesOut)"
+                Regex="@SourceControlID@"
+                Encoding="Windows-1252"
+                ReplacementText="$(SourceControlID)" />
+    <FileUpdate Files="@(SubstituteVersionFilesOut)"
+                Regex="@BuildID@"
+                Encoding="Windows-1252"
+                ReplacementText="$(BuildID)" />
+  </Target>
+
+  <Target Name="SubstituteNugetInfo" DependsOnTargets="SubstituteVersionInfo">
+    <FileUpdate Files="@(SubstituteVersionFilesOut)" Regex="@PartName@" Encoding="Windows-1252" ReplacementText="$(PartName)" />
+    <FileUpdate Files="@(SubstituteVersionFilesOut)" Regex="@PartId@" Encoding="Windows-1252" ReplacementText="$(PartId)" />
+    <FileUpdate Files="@(SubstituteVersionFilesOut)" Regex="@PartDescription@" Encoding="Windows-1252" ReplacementText="$(PartDescription)" />
+  </Target>
+  
+  <!-- Generate doxygen automatic documentation, user MUST define  $(DocDir) -->
+  <Target Name="RunDoxygen" DependsOnTargets= "SubstituteInstallerInfo;NugetRestore" >
+    <Exec Command="$(DoxygenCommand) $(DocDir)\Doxyfile" WorkingDirectory="$(DocDir)" />
+  </Target>
+
+</Project>

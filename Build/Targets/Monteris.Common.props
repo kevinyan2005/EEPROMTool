@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- This file exists to properties needed for Monteris targets.
+       The properties are conditionally-defined so that they can be overridden in the project file.
+       This file should be included by Monteris.<Language>.props.       
+  -->
+
+  <!-- Define SourceControlID to be the Perforce Changelist (on build server) else 'dev' -->
+  <Choose>
+    <When Condition=" '$(JENKINS_HOME)' != '' ">
+      <PropertyGroup>
+        <SourceControlID>$(P4_CHANGELIST)</SourceControlID>
+        <BuildID>$(BUILD_TAG)</BuildID>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <SourceControlID>dev</SourceControlID>
+        <BuildID>devbuild</BuildID>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+  <PropertyGroup>
+    <BuildTimestamp>$([System.DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss"))</BuildTimestamp>
+    <BuildDescription>$(BuildID) @ $(SourceControlID) $(BuildTimestamp)</BuildDescription>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <PartDescriptor Condition=" '$(PartDescriptor)' == '' ">$(PartNumber)-$(PartVersion)</PartDescriptor>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+	<InstallFolder Condition=" '$(InstallFolder)' == '' ">$(MSBuildProjectDirectory)\install</InstallFolder>
+  </PropertyGroup>
+
+  <!-- Tool Locations -->
+  <PropertyGroup>
+    <BuildToolsDir Condition=" '$(BuildToolsDir)' == '' ">$(MSBuildStartupDirectory)\Build\Tools</BuildToolsDir>
+    <PackagesDir Condition=" '$(PackagesDir)' == '' ">$(MSBuildStartupDirectory)\packages</PackagesDir>
+    <InnoSetupDir Condition=" '$(InnoSetupDir)' == '' ">$(PackagesDir)\Tools.InnoSetup.5.5.9</InnoSetupDir>
+    <ReportsDir Condition=" '$(ReportsDir)' == '' ">$(MSBuildStartupDirectory)\Reports</ReportsDir>
+    <DocDir Condition=" '$(DocDir)' == '' ">$(MSBuildProjectDirectory)\doc</DocDir>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+     <DoxygenBinDir  Condition=" '$(DoxygenBinDir)' == '' ">$(PackagesDir)\Doxygen.1.8.17\tools</DoxygenBinDir>
+     <DoxygenCommand  Condition=" '$(DoxygenCommand)' == '' ">"$(DoxygenBinDir)\doxygen.exe"</DoxygenCommand>
+  </PropertyGroup>
+  
+</Project>
