@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using OneWireEEPROMWpfApp.Views;
+using System.Configuration;
 
 namespace OneWireEEPROMWpfApp.ViewModels
 {
@@ -58,6 +59,42 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
         private bool _useOverrideSpeed;
 
+        private bool _allowEditIdentification;
+        public bool AllowEditIdentification
+        {
+            get => _allowEditIdentification;
+            set
+            {
+                if (_allowEditIdentification == value) return;
+                _allowEditIdentification = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _allowEditCalibration;
+        public bool AllowEditCalibration
+        {
+            get => _allowEditCalibration;
+            set
+            {
+                if (_allowEditCalibration == value) return;
+                _allowEditCalibration = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _showOverdriveCheckbox;
+        public bool ShowOverdriveCheckbox
+        {
+            get => _showOverdriveCheckbox;
+            set
+            {
+                if (_showOverdriveCheckbox == value) return;
+                _showOverdriveCheckbox = value;
+                OnPropertyChanged();
+            }
+        }
+
         /// <summary>
         /// True = Override speed, False = Standard speed
         /// </summary>
@@ -103,7 +140,11 @@ namespace OneWireEEPROMWpfApp.ViewModels
         
         public MainViewModel(IFileDialogService fileDialogService)
         {
-            SelectedPort = "USB1";
+            SelectedPort = ConfigurationManager.AppSettings["DefaultPort"] ?? "USB1";
+
+            AllowEditIdentification = GetAppSettingBool("AllowEditIdentification", defaultValue: true);
+            AllowEditCalibration = GetAppSettingBool("AllowEditCalibration", defaultValue: true);
+            ShowOverdriveCheckbox = GetAppSettingBool("ShowOverdriveCheckbox", defaultValue: false);
             
             _fileDialogService = fileDialogService;
 
@@ -123,6 +164,17 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
             _helper = null;
            
+        }
+
+        private static bool GetAppSettingBool(string key, bool defaultValue)
+        {
+            var raw = ConfigurationManager.AppSettings[key];
+            if (bool.TryParse(raw, out var value))
+            {
+                return value;
+            }
+
+            return defaultValue;
         }
 
         public void OnAppClosing()

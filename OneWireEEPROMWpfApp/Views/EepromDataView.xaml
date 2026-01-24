@@ -4,8 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:OneWireEEPROMWpfApp.Views"
+             xmlns:converters="clr-namespace:OneWireEEPROMWpfApp.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" >
+    <UserControl.Resources>
+        <converters:InverseBooleanConverter x:Key="InverseBoolConverter" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
     <StackPanel>
         <StackPanel Orientation="Horizontal">
             <GroupBox Header="Connectivity">
@@ -31,7 +36,8 @@
             <GroupBox Header="EEPROM Operation" IsEnabled="{Binding IsPortOpen}" Margin="5,0,0,0">
                 <StackPanel Orientation="Horizontal">
                     <CheckBox Content ="Override Speed"  VerticalAlignment="Center"
-                              IsChecked="{Binding UseOverrideSpeed}"></CheckBox>
+                              IsChecked="{Binding UseOverrideSpeed}"
+                              Visibility="{Binding ShowOverdriveCheckbox, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     <Label Content="   "></Label>
                     <Button Width="60" Content="Read" Command="{Binding ReadEepromCommand}"></Button>
                     <Label Content="   "></Label>
@@ -69,19 +75,23 @@
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Model:" />
                     <TextBox Grid.Row="4" Grid.Column="2"
-                             Text="{Binding Identification.ChipModel, UpdateSourceTrigger=PropertyChanged}" />
+                             Text="{Binding Identification.ChipModel, UpdateSourceTrigger=PropertyChanged}"
+                             IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
 
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Version:" />
                     <TextBox Grid.Row="0" Grid.Column="2"
-                             Text="{Binding Identification.DataVersion, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
+                             Text="{Binding Identification.DataVersion, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                             IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
 
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="ID:" />
                     <TextBox Grid.Row="2" Grid.Column="2"
-                             Text="{Binding Identification.DataIdent, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
+                             Text="{Binding Identification.DataIdent, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                             IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
 
                     <TextBlock Grid.Row="6" Grid.Column="0" Text="S/N:" />
                     <TextBox Grid.Row="6" Grid.Column="2"
-                             Text="{Binding Identification.SerialNumber, UpdateSourceTrigger=PropertyChanged}" />
+                             Text="{Binding Identification.SerialNumber, UpdateSourceTrigger=PropertyChanged}"
+                             IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
 
                     <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:" />
                     <TextBox Grid.Row="8" Grid.Column="2" IsReadOnly="True"
@@ -97,7 +107,8 @@
                                 <StackPanel Orientation="Horizontal" Margin="5">
                                     <TextBlock Text="{Binding Index, StringFormat='Gauge Factor {0}: '}" />
                                     <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
-                                             MinWidth="50" />
+                                             MinWidth="50"
+                                             IsReadOnly="{Binding DataContext.AllowEditCalibration, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBoolConverter}}" />
                                 </StackPanel>
                             </DataTemplate>
 
@@ -127,23 +138,25 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Reference Value:" />
                         <TextBox Grid.Row="0" Grid.Column="2"
-                                 Text="{Binding Calibration.ReferenceValue, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
+                                 Text="{Binding Calibration.ReferenceValue, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                                 IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
 
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="Manufacture Date:" />
                         <!--<TextBox Grid.Row="2" Grid.Column="2" 
                                      Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
                         <TextBox Grid.Row="2" Grid.Column="2"
                                  Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:dd/MM/yyyy}, TargetNullValue=''}"
-                                 IsReadOnly="True" />
+                                 IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
                         <TextBlock Grid.Row="4" Grid.Column="0" Text="Expiry Date:" />
                         <!--<TextBox Grid.Row="4" Grid.Column="2" 
                                      Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
                         <TextBox Grid.Row="4" Grid.Column="2"
                                  Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:dd/MM/yyyy}, TargetNullValue=''}"
-                                 IsReadOnly="True" />
+                                 IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
                         <TextBlock Grid.Row="6" Grid.Column="0" Text="Gauge Type:" />
                         <TextBox Grid.Row="6" Grid.Column="2"
-                                 Text="{Binding Calibration.GaugeType, UpdateSourceTrigger=PropertyChanged}" />
+                                 Text="{Binding Calibration.GaugeType, UpdateSourceTrigger=PropertyChanged}"
+                                 IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
 
                         <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:" />
                         <TextBox Grid.Row="8" Grid.Column="2" IsReadOnly="True"
