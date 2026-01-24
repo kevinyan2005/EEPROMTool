@@ -27,6 +27,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         public ICommand TogglePortCommand { get; }
         public ICommand ReadEepromCommand { get; }
         public ICommand WriteEepromCommand { get; }
+        public ICommand EraseEepromCommand { get; }
         public ICommand LoadJsonCommand { get; }
         public ICommand SaveJsonCommand { get; }
         public ICommand ExportHexCommand { get; }
@@ -157,6 +158,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             TogglePortCommand = new RelayCommand(TogglePort);
             ReadEepromCommand = new RelayCommand(LoadMemory);
             WriteEepromCommand = new RelayCommand(WriteMemory);
+            EraseEepromCommand = new RelayCommand(EraseMemory);
             LoadJsonCommand = new RelayCommand(LoadJson);
             SaveJsonCommand = new RelayCommand(SaveJson);
             ExportHexCommand = new RelayCommand(ExportHex);
@@ -356,6 +358,21 @@ namespace OneWireEEPROMWpfApp.ViewModels
             WriteEepromAsync();
         }
 
+        private void EraseMemory()
+        {
+            var confirmDialog = new ConfirmEraseDialog
+            {
+                Owner = Application.Current?.MainWindow
+            };
+
+            if (confirmDialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            EraseEepromAsync();
+        }
+
         private async Task WriteEepromAsync()
         {
             var progressIndicator = new Progress<int>(percent => Progress = percent);
@@ -374,6 +391,21 @@ namespace OneWireEEPROMWpfApp.ViewModels
             Progress = 0; // Reset progress
 
             //Read EEPROM after writing
+            LoadMemory();
+        }
+
+        private async Task EraseEepromAsync()
+        {
+            var progressIndicator = new Progress<int>(percent => Progress = percent);
+            var eepromImage = new byte[128];
+
+            await MeasureAsync(
+                () => _helper.WriteMemoryAsync(0, eepromImage, false, progressIndicator),
+                "Erase Entire EEPROM memory"
+            );
+
+            Logger.Info("Erase operation completed.");
+            Progress = 0; // Reset progress
             LoadMemory();
         }
 

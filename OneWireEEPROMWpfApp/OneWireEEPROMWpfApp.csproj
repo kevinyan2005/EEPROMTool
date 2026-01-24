@@ -96,6 +96,9 @@
     <Compile Include="ViewModels\IdentificationViewModel.cs" />
     <Compile Include="ViewModels\UserDataViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
+    <Compile Include="Views\ConfirmEraseDialog.xaml.cs">
+      <DependentUpon>ConfirmEraseDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ConfirmWriteDialog.xaml.cs">
       <DependentUpon>ConfirmWriteDialog.xaml</DependentUpon>
     </Compile>
@@ -115,6 +118,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Views\EepromDataView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ConfirmEraseDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
