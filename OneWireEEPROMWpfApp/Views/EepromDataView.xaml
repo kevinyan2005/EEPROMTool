@@ -73,11 +73,11 @@
 
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Version:" />
                     <TextBox Grid.Row="0" Grid.Column="2"
-                             Text="{Binding Identification.DataVersion, UpdateSourceTrigger=PropertyChanged}" />
+                             Text="{Binding Identification.DataVersion, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
 
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="ID:" />
                     <TextBox Grid.Row="2" Grid.Column="2"
-                             Text="{Binding Identification.DataIdent, UpdateSourceTrigger=PropertyChanged}" />
+                             Text="{Binding Identification.DataIdent, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
 
                     <TextBlock Grid.Row="6" Grid.Column="0" Text="S/N:" />
                     <TextBox Grid.Row="6" Grid.Column="2"
@@ -85,7 +85,7 @@
 
                     <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:" />
                     <TextBox Grid.Row="8" Grid.Column="2" IsReadOnly="True"
-                             Text="{Binding Identification.Crc, StringFormat={}{0:X}, UpdateSourceTrigger=PropertyChanged}" />
+                             Text="{Binding Identification.Crc, StringFormat={}{0:X}, UpdateSourceTrigger=PropertyChanged, TargetNullValue='', Mode=OneWay}" />
                 </Grid>
             </GroupBox>
 
@@ -96,7 +96,7 @@
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" Margin="5">
                                     <TextBlock Text="{Binding Index, StringFormat='Gauge Factor {0}: '}" />
-                                    <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
                                              MinWidth="50" />
                                 </StackPanel>
                             </DataTemplate>
@@ -127,19 +127,19 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Reference Value:" />
                         <TextBox Grid.Row="0" Grid.Column="2"
-                                 Text="{Binding Calibration.ReferenceValue, UpdateSourceTrigger=PropertyChanged}" />
+                                 Text="{Binding Calibration.ReferenceValue, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
 
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="Manufacture Date:" />
                         <!--<TextBox Grid.Row="2" Grid.Column="2" 
                                      Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
                         <TextBox Grid.Row="2" Grid.Column="2"
-                                 Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:dd/MM/yyyy}}"
+                                 Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:dd/MM/yyyy}, TargetNullValue=''}"
                                  IsReadOnly="True" />
                         <TextBlock Grid.Row="4" Grid.Column="0" Text="Expiry Date:" />
                         <!--<TextBox Grid.Row="4" Grid.Column="2" 
                                      Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
                         <TextBox Grid.Row="4" Grid.Column="2"
-                                 Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:dd/MM/yyyy}}"
+                                 Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:dd/MM/yyyy}, TargetNullValue=''}"
                                  IsReadOnly="True" />
                         <TextBlock Grid.Row="6" Grid.Column="0" Text="Gauge Type:" />
                         <TextBox Grid.Row="6" Grid.Column="2"
@@ -147,7 +147,7 @@
 
                         <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:" />
                         <TextBox Grid.Row="8" Grid.Column="2" IsReadOnly="True"
-                                 Text="{Binding Calibration.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged}" />
+                                 Text="{Binding Calibration.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
 
                     </Grid>
                 </StackPanel>
@@ -188,14 +188,9 @@
                         <!--<TextBlock Grid.Row="4" Grid.Column="0" Text="Zero Value:"></TextBlock>-->
                         <TextBlock Grid.Row="4" Grid.Column="0" Text="Probe Type:"></TextBlock>
                         <TextBlock Grid.Row="6" Grid.Column="0" Text="Checksum:"></TextBlock>
-                        <!--<TextBox Grid.Row="2" Grid.Column="2" 
-                 Text="{Binding User.ExpiryDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
-                        <DatePicker Grid.Row="0" Grid.Column="2" SelectedDate="{Binding User.ExpiryDate, Mode=TwoWay}" />
-                        <!--<TextBox Grid.Row="2" Grid.Column="2" 
-                                     Text="{Binding User.ProbeUsage, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
+                        <DatePicker Grid.Row="0" Grid.Column="2" SelectedDate="{Binding User.ProbeExpiryDate, Mode=TwoWay, TargetNullValue={x:Null}}" />
                         <TextBox Grid.Row="2" Grid.Column="2"
-                                 Text="{Binding User.ProbeUsage, StringFormat={}{0:dd/MM/yyyy}}" IsReadOnly="True" />
-                        <!--<TextBox Grid.Row="4" Grid.Column="2" Text="{Binding User.ZeroValue}" />-->
+                                 Text="{Binding User.ProbeUsageDate, StringFormat={}{0:dd/MM/yyyy}, TargetNullValue=''}" IsReadOnly="True" />
 
                         <ComboBox Grid.Row="4" Grid.Column="2" Width="100" HorizontalAlignment="Left"
                                   ItemsSource="{Binding User.AvailableProbes}"
@@ -203,7 +198,7 @@
                         />
 
                         <TextBox Grid.Row="6" Grid.Column="2" IsReadOnly="True"
-                                 Text="{Binding User.Crc, StringFormat={}{0:X4}}" />
+                                 Text="{Binding User.Crc, StringFormat={}{0:X4}, TargetNullValue=''}" />
                     </Grid>
                 </StackPanel>
             </GroupBox>

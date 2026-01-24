@@ -12,8 +12,8 @@ namespace OneWire.Common
         public uint ZeroValue { get; set; }                 // 4 bytes
         public uint EqualizationFactor { get; set; }        // 4 bytes
         public string ProbeSerialNumber { get; set; } = ""; // 16 bytes (ASCII)
-        public DateTime ProbeManufactureDate { get; set; } = DateTime.Now.AddYears(2);  // 8 bytes
-        public DateTime FirstConnectionDate { get; set; } = DateTime.MinValue; // 8 bytes
+        public DateTime ProbeExpiryDate { get; set; } = DateTime.Now.AddYears(2);  // 8 bytes
+        public DateTime ProbeUsageDate { get; set; } = DateTime.MaxValue; // 8 bytes
         public ushort Crc16 { get; set; }           // 2 bytes
        
         public byte[] ToBytes()
@@ -35,12 +35,12 @@ namespace OneWire.Common
             Array.Copy(probeSerialBytes, 0, data, offset, Math.Min(16, probeSerialBytes.Length));
             offset += 16;
 
-            // ProbeManufactureDate
-            Array.Copy(BitConverter.GetBytes(ProbeManufactureDate.ToBinary()), 0, data, offset, 8);
+            // ProbeExpiryDate
+            Array.Copy(BitConverter.GetBytes(ProbeExpiryDate.ToBinary()), 0, data, offset, 8);
             offset += 8;
 
-            // FirstConnectionDate
-            Array.Copy(BitConverter.GetBytes(FirstConnectionDate.ToBinary()), 0, data, offset, 8);
+            // ProbeUsageDate
+            Array.Copy(BitConverter.GetBytes(ProbeUsageDate.ToBinary()), 0, data, offset, 8);
 
             // CRC16
             Crc16 = CrcHelper.ComputeCrc16(data, data.Length);

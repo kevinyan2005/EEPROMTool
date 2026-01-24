@@ -11,70 +11,40 @@ namespace OneWireEEPROMWpfApp.ViewModels
     public class IdentificationViewModel : ViewModelBase
     {
         public OneWireIdentificationBlock Model { get; }
-        private ushort? _dataVersion;
-        private ushort? _dataIdent;
+
+        
+       
         private ushort? _crc;
 
-
         public IdentificationViewModel(OneWireIdentificationBlock model)
-            : this(model, false) { }
-
-        public IdentificationViewModel(OneWireIdentificationBlock model, bool loadFromData = false)
         {
             Model = model;
-            if (loadFromData)
-            {
-                _dataVersion = model.DataVersion;
-                _dataIdent = model.DataId;
-                _crc = model.Crc16;
-            }
-            else
-            {
-                _dataVersion = null;
-                _dataIdent = null;
-                _crc = null;
-            }
+            _dataVersion = model.DataVersion == 0 ? (ushort?)null : model.DataVersion;
+            _dataIdent = model.DataId == 0 ? (ushort?)null : model.DataId;
+            _crc = model.Crc16 == 0 ? (ushort?)null : model.Crc16;
         }
 
+        private ushort? _dataVersion;
         public ushort? DataVersion
         {
             get => _dataVersion;
             set
             {
-                if (_dataVersion == value) return;
-                _dataVersion = value;
-                if (value.HasValue)
-                {
-                    Model.DataVersion = value.Value;
-                    UpdateCrc();
-                }
-                else
-                {
-                    _crc = null;
-                    OnPropertyChanged(nameof(Crc));
-                }
-                OnPropertyChanged();
+               _dataVersion = value;
+                OnPropertyChanged(nameof(DataVersion));
+                UpdateCrc();
             }
         }
 
+        private ushort? _dataIdent;
         public ushort? DataIdent
         {
             get => _dataIdent;
             set
             {
-                if (_dataIdent == value) return;
                 _dataIdent = value;
-                if (value.HasValue)
-                {
-                    Model.DataId = value.Value;
-                    UpdateCrc();
-                }
-                else
-                {
-                    _crc = null;
-                    OnPropertyChanged(nameof(Crc));
-                }
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(DataIdent));                
+                UpdateCrc();
             }
         }
 

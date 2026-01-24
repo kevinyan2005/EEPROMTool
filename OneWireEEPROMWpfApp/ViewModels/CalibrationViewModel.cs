@@ -14,27 +14,65 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
         public ObservableCollection<GaugeFactorViewModel> GaugeFactors { get; }
 
-        public uint ReferenceValue
+        private uint? _referenceValue;
+        private DateTime? _manufactureDate;
+        private DateTime? _expiryDate;
+        private ushort? _crc;
+
+        public CalibrationViewModel(SensorCalibrationBlock data)
+            : this(data, false) { }
+
+        public CalibrationViewModel(SensorCalibrationBlock data, bool loadFromData = false)
         {
-            get => _data.ReferenceValue;
-            set
+            _data = data;
+
+            if (loadFromData)
             {
-                _data.ReferenceValue = value;
-                OnPropertyChanged();
-                UpdateCrc();
+                _referenceValue = data.ReferenceValue;
+                _manufactureDate = data.ManufactureDate == default ? (DateTime?)null : data.ManufactureDate;
+                _expiryDate = data.ExpiryDate == default ? (DateTime?)null : data.ExpiryDate;
+                _crc = data.Crc16;
+            }
+            else
+            {
+                _referenceValue = null;
+                _manufactureDate = null;
+                _expiryDate = null;
+                _crc = null;
+            }
+            
+
+            GaugeFactors = new ObservableCollection<GaugeFactorViewModel>();
+            for (int i = 0; i < _data.GaugeFactors.Length; i++)
+            {
+                GaugeFactors.Add(new GaugeFactorViewModel(i, _data.GaugeFactors, UpdateCrc, loadFromData));
             }
         }
+        /// <summary>
+        /// Force recalc and notify UI that CRC changed.
+        /// </summary>
 
-        //public ushort GaugeType
-        //{
-        //    get => _data.GaugeType;
-        //    set
-        //    {
-        //        _data.GaugeType = value;
-        //        OnPropertyChanged();
-        //        UpdateCrc();
-        //    }
-        //}
+        public uint? ReferenceValue
+        {
+            get => _referenceValue;
+            set
+            {
+                if (_referenceValue == value) return;
+                _referenceValue = value;
+                if (value.HasValue)
+                {
+                    _data.ReferenceValue = value.Value;
+                    UpdateCrc();
+                }
+                else
+                {
+                    _crc = null;
+                    OnPropertyChanged(nameof(Crc));
+                }
+                OnPropertyChanged();
+            }
+        }
+        
         public string GaugeType
         {
             get => _data.GaugeType;
@@ -46,54 +84,75 @@ namespace OneWireEEPROMWpfApp.ViewModels
             }
         }
 
-        public DateTime ManufactureDate
+        public DateTime? ManufactureDate
         {
-            get => _data.ManufactureDate;
+            get => _manufactureDate;
             set
             {
-                _data.ManufactureDate = value;
-                OnPropertyChanged();
-                UpdateCrc();
-            }
-        }
-
-        public DateTime ExpiryDate
-        {
-            get => _data.ExpiryDate;
-            set
-            {
-                _data.ExpiryDate = value;
-                OnPropertyChanged();
-                UpdateCrc();
-            }
-        }
-
-        public ushort Crc
-        {
-            get => _data.Crc16;
-            set
-            {
-                _data.Crc16 = value;
+                if (_manufactureDate == value) return;
+                _manufactureDate = value;
+                if (value.HasValue)
+                {
+                    _data.ManufactureDate = value.Value;
+                    UpdateCrc();
+                }
+                else
+                {
+                    _crc = null;
+                    OnPropertyChanged(nameof(Crc));
+                }
                 OnPropertyChanged();
             }
         }
 
-        public CalibrationViewModel(SensorCalibrationBlock data)
+        public DateTime? ExpiryDate
         {
-            _data = data;
-
-            GaugeFactors = new ObservableCollection<GaugeFactorViewModel>();
-            for (int i = 0; i < _data.GaugeFactors.Length; i++)
+            get => _expiryDate;
+            set
             {
-                GaugeFactors.Add(new GaugeFactorViewModel(i, _data.GaugeFactors, UpdateCrc));
+                if (_expiryDate == value) return;
+                _expiryDate = value;
+                if (value.HasValue)
+                {
+                    _data.ExpiryDate = value.Value;
+                    UpdateCrc();
+                }
+                else
+                {
+                    _crc = null;
+                    OnPropertyChanged(nameof(Crc));
+                }
+                OnPropertyChanged();
             }
         }
-        /// <summary>
-        /// Force recalc and notify UI that CRC changed.
-        /// </summary>
+
+        public ushort? Crc
+        {
+            get => _crc;
+            set
+            {
+                _crc = value;
+                if (value.HasValue)
+                {
+                    _data.Crc16 = value.Value;
+                }
+                OnPropertyChanged();
+            }
+        }
+
+      
         protected void UpdateCrc()
         {
+            if (!_referenceValue.HasValue || !_manufactureDate.HasValue || !_expiryDate.HasValue ||
+                GaugeFactors.Any(gf => !gf.Value.HasValue))
+            {
+                _crc = null;
+                OnPropertyChanged(nameof(Crc));
+                return;
+            }
+
             _data.RecalculateCrc();
+            _crc = _data.Crc16;
             OnPropertyChanged(nameof(Crc));
         }
     }
@@ -118,25 +177,32 @@ namespace OneWireEEPROMWpfApp.ViewModels
             }
         }
 
-        public uint Value
+        private uint? _value;
+
+        public uint? Value
         {
-            get => _gaugeFactors[_index];
+            get => _value;
             set
             {
-                if (_gaugeFactors[_index] != value)
+                if (_value == value) return;
+                _value = value;
+                if (value.HasValue)
                 {
-                    _gaugeFactors[_index] = value; // updates data model
-                    OnPropertyChanged();
-                    _updateCrc?.Invoke();
+                    _gaugeFactors[_index] = value.Value; // updates data model
                 }
+                OnPropertyChanged();
+                _updateCrc?.Invoke();
             }
         }
 
-        public GaugeFactorViewModel(int index, uint[] gaugeFactors, Action updateCrc)
+        public GaugeFactorViewModel(int index, uint[] gaugeFactors, Action updateCrc, bool loadFromData)
         {
             _index = index;
             _gaugeFactors = gaugeFactors;
             _updateCrc = updateCrc;
+
+            // If loading, take the value from the array. If not, start as null.
+            _value = loadFromData ? gaugeFactors[index] : (uint?)null;
         }
 
     }

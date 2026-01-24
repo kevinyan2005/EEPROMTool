@@ -177,9 +177,9 @@ namespace OneWireEEPROMWpfApp.ViewModels
             _eeprom = JsonConvert.DeserializeObject<EepromData>(json)!;
 
             // Re-wrap VMs around the new data
-            Identification = new IdentificationViewModel(_eeprom.Id);
-            Calibration = new CalibrationViewModel(_eeprom.Calibration);
-            User = new UserDataViewModel(_eeprom.User);
+            Identification = new IdentificationViewModel(_eeprom.Id, loadFromData: true);
+            Calibration = new CalibrationViewModel(_eeprom.Calibration, loadFromData:true);
+            User = new UserDataViewModel(_eeprom.User, loadFromData: true);
 
             // Notify UI that these VM references changed
             OnPropertyChanged(nameof(Identification));
@@ -416,8 +416,8 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 User.ZeroValue = BitConverter.ToUInt32(eeprom, offset);
                 User.EqualizationFactor = BitConverter.ToUInt32(eeprom, offset + 4);
                 User.ProbeSerialNumber = Encoding.ASCII.GetString(eeprom, offset + 8, 16).TrimEnd('\0');
-                User.ManufactureDate = new DateTime(BitConverter.ToInt64(eeprom, offset + 24));
-                User.ProbeUsage = new DateTime(BitConverter.ToInt64(eeprom, offset + 32));
+                User.ProbeExpiryDate = new DateTime(BitConverter.ToInt64(eeprom, offset + 24));
+                User.ProbeUsageDate = new DateTime(BitConverter.ToInt64(eeprom, offset + 32));
                 User.Crc = BitConverter.ToUInt16(eeprom, offset + 40);
                 Logger.Debug("User-defined data parsed successfully");
 

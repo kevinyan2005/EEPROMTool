@@ -13,6 +13,9 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
         private readonly UserDefinedBlock _model;
         private ProbeTypeEnum _selectedProbe;
+        private DateTime? _probeUsageDate;
+        private DateTime? _probeExpiryDate;
+        private ushort? _crc;
 
         public static readonly IReadOnlyDictionary<ProbeTypeEnum, string> TypeToPartNumber =
             new Dictionary<ProbeTypeEnum, string>
@@ -23,10 +26,27 @@ namespace OneWireEEPROMWpfApp.ViewModels
             };
 
         public UserDataViewModel(UserDefinedBlock model)
+            : this(model, false) { }
+
+        public UserDataViewModel(UserDefinedBlock model, bool loadFromData = false)
         {
             _model = model;
-            // Initialize the Enum selection based on whatever string is in the model
-            SyncSelectedProbeFromPartNumber();
+
+            if (loadFromData)
+            {
+                _probeUsageDate = model.ProbeUsageDate == default ? (DateTime?)null : model.ProbeUsageDate;
+                _probeExpiryDate = model.ProbeExpiryDate == default ? (DateTime?)null : model.ProbeExpiryDate;
+                _crc = model.Crc16;
+                // Initialize the Enum selection based on whatever string is in the model
+                SyncSelectedProbeFromPartNumber();
+            }
+            else
+            {
+                // Fields stay null, serial number remains empty string in model
+                _probeUsageDate = null;
+                _probeExpiryDate = null;
+                _crc = null;
+            }
         }
 
         #region Serial Number Logic
@@ -49,16 +69,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 }
             }
         }
-        public DateTime ProbeUsage
-        {
-            get => _model.FirstConnectionDate;
-            set
-            {
-                _model.FirstConnectionDate = value;
-                OnPropertyChanged();
-                UpdateCrc();
-            }
-        }
+       
         public uint EqualizationFactor
         {
             get => _model.EqualizationFactor;
@@ -110,16 +121,46 @@ namespace OneWireEEPROMWpfApp.ViewModels
         public ObservableCollection<ProbeTypeEnum> AvailableProbes { get; } =
             new ObservableCollection<ProbeTypeEnum>(Enum.GetValues(typeof(ProbeTypeEnum)).Cast<ProbeTypeEnum>());
 
-        public DateTime ManufactureDate
+        public DateTime? ProbeUsageDate
         {
-            get => _model.ProbeManufactureDate;
-            set { _model.ProbeManufactureDate = value; OnPropertyChanged(); UpdateCrc(); }
+            get => _probeUsageDate; // Using same model field as your example
+            set
+            {
+                if (_probeUsageDate == value) return;
+                _probeUsageDate = value;
+                if (value.HasValue)
+                {
+                    _model.ProbeExpiryDate = value.Value;
+                    UpdateCrc();
+                }
+                else
+                {
+                    _crc = null;
+                    OnPropertyChanged(nameof(Crc));
+                }
+                OnPropertyChanged();
+            }
         }
 
-        public DateTime ExpiryDate
+        public DateTime? ProbeExpiryDate
         {
-            get => _model.ProbeManufactureDate; // Using same model field as your example
-            set { _model.ProbeManufactureDate = value; OnPropertyChanged(); UpdateCrc(); }
+            get => _probeExpiryDate; // Using same model field as your example
+            set
+            {
+                if (_probeExpiryDate == value) return;
+                _probeExpiryDate = value;
+                if (value.HasValue)
+                {
+                    _model.ProbeExpiryDate = value.Value;
+                    UpdateCrc();
+                }
+                else
+                {
+                    _crc = null;
+                    OnPropertyChanged(nameof(Crc));
+                }
+                OnPropertyChanged();
+            }
         }
 
         public uint ZeroValue
@@ -128,15 +169,31 @@ namespace OneWireEEPROMWpfApp.ViewModels
             set { _model.ZeroValue = value; OnPropertyChanged(); UpdateCrc(); }
         }
 
-        public ushort Crc
+        public ushort? Crc
         {
-            get => _model.Crc16;
-            set { _model.Crc16 = value; OnPropertyChanged(); }
+            get => _crc;
+            set
+            {
+                _crc = value;
+                if (value.HasValue)
+                {
+                    _model.Crc16 = value.Value;
+                }
+                OnPropertyChanged();
+            }
         }
 
         protected void UpdateCrc()
         {
+            if (!_probeUsageDate.HasValue || !_probeExpiryDate.HasValue)
+            {
+                _crc = null;
+                OnPropertyChanged(nameof(Crc));
+                return;
+            }
+
             _model.RecalculateCrc();
+            _crc = _model.Crc16;
             OnPropertyChanged(nameof(Crc));
         }
 

@@ -141,8 +141,8 @@ namespace ConsoleApp1
                 ZeroValue = 1000,
                 EqualizationFactor = 2000,
                 ProbeSerialNumber = "20891-DV001-0001",
-                ProbeManufactureDate = new DateTime(2022, 6, 10),
-                FirstConnectionDate = DateTime.MinValue
+                ProbeExpiryDate = new DateTime(2022, 6, 10),
+                ProbeUsageDate = DateTime.MinValue
             };
 
             byte[] userBytes = userBlock.ToBytes();
