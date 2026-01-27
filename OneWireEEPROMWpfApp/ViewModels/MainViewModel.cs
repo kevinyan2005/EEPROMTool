@@ -6,6 +6,7 @@ using slf4net;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Globalization;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -59,6 +60,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         }
 
         private bool _useOverrideSpeed;
+        private readonly byte _eraseFillByte;
 
         private bool _allowEditIdentification;
         public bool AllowEditIdentification
@@ -146,6 +148,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             AllowEditIdentification = GetAppSettingBool("AllowEditIdentification", defaultValue: true);
             AllowEditCalibration = GetAppSettingBool("AllowEditCalibration", defaultValue: true);
             ShowOverdriveCheckbox = GetAppSettingBool("ShowOverdriveCheckbox", defaultValue: false);
+            _eraseFillByte = GetAppSettingByte("EraseFillByte", 0x00);
             
             _fileDialogService = fileDialogService;
 
@@ -172,6 +175,30 @@ namespace OneWireEEPROMWpfApp.ViewModels
         {
             var raw = ConfigurationManager.AppSettings[key];
             if (bool.TryParse(raw, out var value))
+            {
+                return value;
+            }
+
+            return defaultValue;
+        }
+
+        private static byte GetAppSettingByte(string key, byte defaultValue)
+        {
+            var raw = ConfigurationManager.AppSettings[key];
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return defaultValue;
+            }
+
+            raw = raw.Trim();
+            if (raw.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                if (byte.TryParse(raw.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hexValue))
+                {
+                    return hexValue;
+                }
+            }
+            else if (byte.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
             {
                 return value;
             }
@@ -398,6 +425,10 @@ namespace OneWireEEPROMWpfApp.ViewModels
         {
             var progressIndicator = new Progress<int>(percent => Progress = percent);
             var eepromImage = new byte[128];
+            for (var i = 0; i < eepromImage.Length; i++)
+            {
+                eepromImage[i] = _eraseFillByte;
+            }
 
             await MeasureAsync(
                 () => _helper.WriteMemoryAsync(0, eepromImage, false, progressIndicator),

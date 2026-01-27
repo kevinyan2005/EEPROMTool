@@ -13,7 +13,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
-                   Text="Erase the entire EEPROM (write all 0x00)?"
+                   Text="Erase the entire EEPROM?"
                    TextWrapping="Wrap"
                    FontSize="14" />
 
