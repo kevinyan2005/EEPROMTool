@@ -165,6 +165,9 @@ $RECYCLE.BIN/
 # Azure Functions
 local.settings.json
 
+# Installer outputs
+install/**
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
