@@ -12,7 +12,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(UserDataViewModel));
 
         private readonly UserDefinedBlock _model;
-        private ProbeTypeEnum _selectedProbe;
+        private ProbeTypeEnum? _selectedProbe;
         private DateTime? _probeUsageDate;
         private DateTime? _probeExpiryDate;
         private ushort? _crc;
@@ -69,34 +69,31 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 }
             }
         }
-       
-        public uint EqualizationFactor
-        {
-            get => _model.EqualizationFactor;
-            set
-            {
-                _model.EqualizationFactor = value;
-                OnPropertyChanged();
-                UpdateCrc();
-            }
-        }
 
         public string PartNumber =>
-            TypeToPartNumber.TryGetValue(SelectedProbe, out var pn) ? pn : string.Empty;
+            _selectedProbe.HasValue && TypeToPartNumber.TryGetValue(_selectedProbe.Value, out var pn)
+                ? pn
+                : string.Empty;
 
-        public string LotNumber
+        public string SizeNumber
         {
             get => SplitParts()[1];
             set => UpdateProbeSerialNumberComponent(1, value);
         }
 
-        public string Sequence
+        public string LotNumber
         {
             get => SplitParts()[2];
             set => UpdateProbeSerialNumberComponent(2, value);
         }
 
-        public ProbeTypeEnum SelectedProbe
+        public string Sequence
+        {
+            get => SplitParts()[3];
+            set => UpdateProbeSerialNumberComponent(3, value);
+        }
+
+        public ProbeTypeEnum? SelectedProbe
         {
             get => _selectedProbe;
             set
@@ -121,6 +118,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         public ObservableCollection<ProbeTypeEnum> AvailableProbes { get; } =
             new ObservableCollection<ProbeTypeEnum>(Enum.GetValues(typeof(ProbeTypeEnum)).Cast<ProbeTypeEnum>());
 
+        // Not included for CRC check
         public DateTime? ProbeUsageDate
         {
             get => _probeUsageDate; // Using same model field as your example
@@ -131,7 +129,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 if (value.HasValue)
                 {
                     _model.ProbeExpiryDate = value.Value;
-                    UpdateCrc();
+                    //UpdateCrc();
                 }
                 else
                 {
@@ -141,6 +139,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 OnPropertyChanged();
             }
         }
+
 
         public DateTime? ProbeExpiryDate
         {
@@ -163,10 +162,15 @@ namespace OneWireEEPROMWpfApp.ViewModels
             }
         }
 
-        public uint ZeroValue
+        public ushort Schema
         {
-            get => _model.ZeroValue;
-            set { _model.ZeroValue = value; OnPropertyChanged(); UpdateCrc(); }
+            get => _model.Schema;
+            set
+            {
+                _model.Schema = value; 
+                OnPropertyChanged(); 
+                UpdateCrc();
+            }
         }
 
         public ushort? Crc
@@ -185,7 +189,8 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
         protected void UpdateCrc()
         {
-            if (!_probeUsageDate.HasValue || !_probeExpiryDate.HasValue)
+            //if (!_probeUsageDate.HasValue || !_probeExpiryDate.HasValue)
+            if (!_probeExpiryDate.HasValue)
             {
                 _crc = null;
                 OnPropertyChanged(nameof(Crc));
@@ -212,19 +217,29 @@ namespace OneWireEEPROMWpfApp.ViewModels
             if (match.Value != null)
             {
                 _selectedProbe = match.Key;
-                OnPropertyChanged(nameof(SelectedProbe));
-                OnPropertyChanged(nameof(PartNumber));
             }
+            else
+            {
+                _selectedProbe = null;
+            }
+
+            OnPropertyChanged(nameof(SelectedProbe));
+            OnPropertyChanged(nameof(PartNumber));
         }
 
         private void UpdateProbeSerialNumberFromParts()
         {
+            if (string.IsNullOrEmpty(PartNumber))
+            {
+                return;
+            }
+
             var parts = SplitParts();
             // Index 0 is updated from the PartNumber property (derived from Enum)
-            // Index 2 (Sequence) is padded to 4 digits
-            int.TryParse(parts[2], out int seqInt);
+            // Index 3 (Sequence) is padded to 2 digits
+            int.TryParse(parts[3], out int seqInt);
 
-            _model.ProbeSerialNumber = $"{PartNumber}-{parts[1]}-{seqInt:0000}";
+            _model.ProbeSerialNumber = $"{PartNumber}-{parts[1]}-{parts[2]}-{seqInt:00}";
             UpdateCrc();
         }
 
@@ -235,8 +250,8 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
             // Rebuild the full string to save to model
             // Note: We use the enum-based PartNumber for index 0 to stay in sync
-            int.TryParse(parts[2], out int seqInt);
-            _model.ProbeSerialNumber = $"{PartNumber}-{parts[1]}-{seqInt:0000}";
+            int.TryParse(parts[3], out int seqInt);
+            _model.ProbeSerialNumber = $"{PartNumber}-{parts[1]}-{parts[2]}-{seqInt:00}";
 
             NotifySerialNumberProperties();
             UpdateCrc();
@@ -245,6 +260,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         private void NotifySerialNumberProperties()
         {
             OnPropertyChanged(nameof(ProbeSerialNumber));
+            OnPropertyChanged(nameof(SizeNumber));
             OnPropertyChanged(nameof(LotNumber));
             OnPropertyChanged(nameof(Sequence));
         }
@@ -257,6 +273,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 parts.ElementAtOrDefault(0) ?? string.Empty,
                 parts.ElementAtOrDefault(1) ?? string.Empty,
                 parts.ElementAtOrDefault(2) ?? string.Empty,
+                parts.ElementAtOrDefault(3) ?? string.Empty,
             };
         }
 

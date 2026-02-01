@@ -110,7 +110,7 @@ namespace ConsoleApp1
             var identBlock = new OneWireIdentificationBlock
             {
                 DataVersion = 1,
-                DataId = 1001,
+                DataId = "OX",
                 Model = "DS2431-DEMO-xxxx",       //16 bytes 
                 SerialNumber = "SN1234567890abcd" //16 bytes
             };
@@ -138,9 +138,8 @@ namespace ConsoleApp1
 
             var userBlock = new UserDefinedBlock
             {
-                ZeroValue = 1000,
-                EqualizationFactor = 2000,
-                ProbeSerialNumber = "20891-DV001-0001",
+                Schema = 1,
+                ProbeSerialNumber = "20891-1-DV001-01",
                 ProbeExpiryDate = new DateTime(2022, 6, 10),
                 ProbeUsageDate = DateTime.MinValue
             };

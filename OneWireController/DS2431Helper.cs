@@ -24,6 +24,8 @@ namespace OneWireController
         private const byte CMD_READ_SCRATCHPAD = 0xAA;
         private const byte CMD_COPY_SCRATCHPAD = 0x55;
 
+        private const int PageSize = 32;
+
         public byte[] Rom { get; }
 
         public DS2431Helper(string port)
@@ -167,21 +169,65 @@ namespace OneWireController
                 .Select(_ => (byte)_adapter.GetByte())
                 .ToArray();
         }
+
+        /// <summary>
+        /// Read Entire Memory
+        /// </summary>
+        /// <param name="overdrive"></param>
+        /// <param name="progress"></param>
+        /// <returns></returns>
+        public async Task<byte[]> ReadEntireMemoryAsync(bool overdrive = false, IProgress<int>? progress = null)
+        {
+            byte[] memory = new byte[128];
+
+            for (int i = 0; i < 128; i += PageSize)
+            {
+                // Reading a row (8 bytes)
+                Logger.Debug($"Reading page(32 bytes) from address: {i} ");
+                //var bytesRead = await Task.Run(() => ReadMemoryInternal(i, pageSize, false));
+                var bytesRead = await Task.Run(() => ReadPageInternal(i, false));
+                Array.Copy(bytesRead, 0, memory, i, bytesRead.Length);
+
+                // Report progress
+                progress?.Report((i + PageSize) * 100 / memory.Length);
+            }
+
+            return memory;
+        }
+     
+        private byte[] ReadPageInternal(int address, bool overdrive)
+        {
+            if (overdrive) OverdriveSkipRom();
+            else SkipRom();
+
+            _adapter.PutByte(CMD_READ_MEMORY);
+            _adapter.PutByte((byte)(address & 0xFF));
+            _adapter.PutByte((byte)((address >> 8) & 0xFF));
+
+            // Create the destination buffer
+            byte[] response = new byte[PageSize];
+
+            // Use GetBlock to read the stream directly into the array
+            // Parameters: (destination array, starting offset in array, number of bytes to read)
+            _adapter.GetBlock(response, 0, PageSize);
+
+            return response;
+        }
         
         public byte[] ReadPage(int pageNumber)
         {
             if (pageNumber < 0 || pageNumber > 3)
                 throw new ArgumentOutOfRangeException("Page must be 0 to 3");
 
-            ushort startAddress = (ushort)(pageNumber * 32);
+            ushort startAddress = (ushort)(pageNumber * PageSize);
 
             SkipRom();
             _adapter.PutByte(CMD_READ_MEMORY);  // Read Memory command
             _adapter.PutByte((byte)(startAddress & 0xFF));  // TA1
             _adapter.PutByte((byte)(startAddress >> 8));    // TA2,
 
-            byte[] data = new byte[32];
-            for (int i = 0; i < 32; i++)
+            byte[] data = new byte[PageSize];
+            for (int i = 0; i < PageSize; i++)
                 data[i] = (byte)_adapter.GetByte(); // read each byte
 
             return data;
@@ -202,7 +248,7 @@ namespace OneWireController
                 Array.Copy(data, i, block, 0, block.Length);
 
                 // Writing a row (8 bytes)
-                await Task.Run(() => WriteMemoryRowInternal(i, block, overdrive));
+                await Task.Run(() => WriteMemoryRowInternal((ushort)(i + address), block, overdrive));
 
                 // Report progress
                 progress?.Report((i + block.Length) * 100 / data.Length);
@@ -232,24 +278,35 @@ namespace OneWireController
 
         private void WriteMemoryRowInternal(ushort baseAddress, byte[] fullData, bool overdrive)
         {
-            // 1. Create a fixed-size buffer of 8 bytes
+            // 1. Validate alignment
+            if (baseAddress % 8 != 0)
+            {
+                Logger.Error($"Write Skipped: 0x{baseAddress:X4} is not 8-byte aligned.");
+                return;
+            }
+
+            // 2. Create a fixed-size buffer of 8 bytes
             byte[] chunk = new byte[8];
+            for (int i = 0; i < chunk.Length; i++)
+            {
+                chunk[i] = 0xFF; // Set default EEPROM "empty" state
+            }
 
             if (fullData != null)
             {
-                // 2. Copy the data into the buffer. 
+                // 3. Copy the data into the buffer. 
                 // Math.Min ensures we don't crash if the input is LARGER than 8.
                 Array.Copy(fullData, chunk, Math.Min(fullData.Length, 8));
             }
 
-            Logger.Debug($"Writing 8 bytes to address: {baseAddress} ");
+            string hexData = BitConverter.ToString(chunk);
+            Logger.Debug($"Writing row: 0x{baseAddress:X2} | Data: [{hexData}]");
+
 
             var stopwatch = Stopwatch.StartNew();
             WriteScratchpad((ushort)(baseAddress), chunk, overdrive);
             stopwatch.Stop();
-
             Logger.Debug($"Done in {stopwatch.ElapsedMilliseconds} ms");
-
         }
 
         private void WriteScratchpad(ushort address, byte[] data, bool overdrive)

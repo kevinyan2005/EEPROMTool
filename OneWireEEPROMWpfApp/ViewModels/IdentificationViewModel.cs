@@ -12,7 +12,6 @@ namespace OneWireEEPROMWpfApp.ViewModels
     {
         public OneWireIdentificationBlock Model { get; }
         private ushort? _dataVersion;
-        private ushort? _dataIdent;
         private ushort? _crc;
 
 
@@ -25,13 +24,11 @@ namespace OneWireEEPROMWpfApp.ViewModels
             if (loadFromData)
             {
                 _dataVersion = model.DataVersion;
-                _dataIdent = model.DataId;
                 _crc = model.Crc16;
             }
             else
             {
                 _dataVersion = null;
-                _dataIdent = null;
                 _crc = null;
             }
         }
@@ -57,24 +54,14 @@ namespace OneWireEEPROMWpfApp.ViewModels
             }
         }
 
-        public ushort? DataIdent
+        public string DataIdent
         {
-            get => _dataIdent;
+            get => Model.DataId;
             set
             {
-                if (_dataIdent == value) return;
-                _dataIdent = value;
-                if (value.HasValue)
-                {
-                    Model.DataId = value.Value;
-                    UpdateCrc();
-                }
-                else
-                {
-                    _crc = null;
-                    OnPropertyChanged(nameof(Crc));
-                }
+                Model.DataId = value;
                 OnPropertyChanged();
+                UpdateCrc();
             }
         }
 
@@ -119,7 +106,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         /// </summary>
         protected void UpdateCrc()
         {
-            if (!_dataVersion.HasValue || !_dataIdent.HasValue)
+            if (!_dataVersion.HasValue)
             {
                 _crc = null;
                 OnPropertyChanged(nameof(Crc));

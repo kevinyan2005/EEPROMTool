@@ -10,7 +10,7 @@ namespace OneWire.Common
     {
         public const int LengthWithoutCrc = 36;
         public ushort DataVersion { get; set; }      // 2 bytes
-        public ushort DataId { get; set; }           // 2 bytes EEPROM chip ID
+        public string DataId { get; set; }           // 2 bytes EEPROM chip ID
         public string Model { get; set; }            // 16 bytes (ASCII), e.g. DS2431
         public string SerialNumber { get; set; }     // 16 bytes (ASCII)
         public ushort Crc16 { get; set; }            // 2 bytes (calculated later)
@@ -20,10 +20,12 @@ namespace OneWire.Common
             byte[] data = new byte[36];
             int offset = 0;
 
-            Array.Copy(BitConverter.GetBytes(DataVersion), 0, data, offset, 2);
+            byte[] versionBytes = ByteHelper.ConvertUInt16ToBytesBigEndian(DataVersion);
+            Array.Copy(versionBytes, 0, data, offset, Math.Min(2, versionBytes.Length));
             offset += 2;
 
-            Array.Copy(BitConverter.GetBytes(DataId), 0, data, offset, 2);
+            byte[] idBytes = Encoding.ASCII.GetBytes(DataId ?? "");
+            Array.Copy(idBytes, 0, data, offset, Math.Min(2, idBytes.Length));
             offset += 2;
 
             byte[] modelBytes = Encoding.ASCII.GetBytes(Model ?? "");

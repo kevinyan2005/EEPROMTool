@@ -13,11 +13,11 @@
     </UserControl.Resources>
     <StackPanel>
         <StackPanel Orientation="Horizontal">
-            <GroupBox Header="Connectivity">
+            <GroupBox Header="Connectivity" Padding="0,6,0,3" Margin="3,0,0,0">
                 <StackPanel Orientation="Horizontal">
                     <Label Content="Port:"></Label>
                     <TextBox Text="{Binding SelectedPort}" IsReadOnly="True" VerticalContentAlignment="Center" MinWidth="60"></TextBox>
-                    <Label Content=" "></Label>
+                    <Label Content=""></Label>
                     <ToggleButton Command="{Binding TogglePortCommand}" Width="90" >
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton">
@@ -45,20 +45,22 @@
                     <Label Content=" "></Label>
                 </StackPanel>
             </GroupBox>
-            <GroupBox Header="EEPROM Operation" IsEnabled="{Binding IsPortOpen}" Margin="5,0,0,0">
+            <GroupBox Header="EEPROM Read/Write Operation" IsEnabled="{Binding IsPortOpen}" Padding="0,6,0,3" Margin="5,0,0,0">
                 <StackPanel Orientation="Horizontal">
                     <CheckBox Content ="Override Speed"  VerticalAlignment="Center"
                               IsChecked="{Binding UseOverrideSpeed}"
                               Visibility="{Binding ShowOverdriveCheckbox, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    <Label Content="   "></Label>
-                    <Button Width="60" Content="Read" Command="{Binding ReadEepromCommand}"></Button>
-                    <Label Content="   "></Label>
-                    <Button Width="60" Content="Write" Command="{Binding WriteEepromCommand}"></Button>
-                    <Label Content="   "></Label>
-                    <Button Width="60" Content="Erase" Command="{Binding EraseEepromCommand}"></Button>
                     <Label Content=" "></Label>
+                    <Button Width="55" Content="Read" Command="{Binding ReadEepromCommand}"></Button>
+                    <Label Content="    "></Label>
+                    <ComboBox Width="120"
+                              ItemsSource="{Binding WriteModes}"
+                              SelectedItem="{Binding SelectedWriteMode, Mode=TwoWay}" />
+                    <Label Content=""></Label>
+                    <Button Width="55" Content="Write" Command="{Binding WriteEepromCommand}"></Button>
+                    <Label Content=""></Label>
                     <Label Content="Progress: "></Label>
-                    <ProgressBar Minimum="0" Maximum="100" Height="20" Width="160" Margin="0,5,0,0"
+                    <ProgressBar Minimum="0" Maximum="100" Height="20" Width="120" Margin="0,2,0,0"
                                  Value="{Binding Progress}" />
                 </StackPanel>
             </GroupBox>
@@ -66,7 +68,7 @@
 
         <StackPanel Orientation="Horizontal">
 
-            <GroupBox Header="EEPROM Identification" Margin="5,5,0,5">
+            <GroupBox Header="EEPROM Identification" Margin="5,5,0,5" Padding="5">
 
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -108,12 +110,13 @@
                              IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
 
                     <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:" />
-                    <TextBox Grid.Row="8" Grid.Column="2" IsReadOnly="True"
-                             Text="{Binding Identification.Crc, StringFormat={}{0:X}, UpdateSourceTrigger=PropertyChanged, TargetNullValue='', Mode=OneWay}" />
+                    <TextBlock Grid.Row="8" Grid.Column="2"
+                             Text="{Binding Identification.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue='', Mode=OneWay}" />
+
                 </Grid>
             </GroupBox>
 
-            <GroupBox Header="Sensor Calibration" Margin="5,5,0,5">
+            <GroupBox Header="Sensor Calibration" Margin="5,5,0,5" Padding="5">
                 <StackPanel Orientation="Horizontal">
                     <ItemsControl ItemsSource="{Binding Calibration.GaugeFactors}">
                         <ItemsControl.ItemTemplate>
@@ -150,22 +153,22 @@
                             <RowDefinition Height="5"></RowDefinition>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Reference Value:" />
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Ref. Value:" />
                         <TextBox Grid.Row="0" Grid.Column="2"
                                  Text="{Binding Calibration.ReferenceValue, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
                                  IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Manufacture Date:" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Mfg. Date:" />
                         <!--<TextBox Grid.Row="2" Grid.Column="2" 
                                      Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
                         <TextBox Grid.Row="2" Grid.Column="2"
-                                 Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:dd/MM/yyyy}, TargetNullValue=''}"
+                                 Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}"
                                  IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
                         <TextBlock Grid.Row="4" Grid.Column="0" Text="Expiry Date:" />
                         <!--<TextBox Grid.Row="4" Grid.Column="2" 
                                      Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
                         <TextBox Grid.Row="4" Grid.Column="2"
-                                 Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:dd/MM/yyyy}, TargetNullValue=''}"
+                                 Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}"
                                  IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
                         <TextBlock Grid.Row="6" Grid.Column="0" Text="Gauge Type:" />
                         <TextBox Grid.Row="6" Grid.Column="2"
@@ -173,24 +176,24 @@
                                  IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
 
                         <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:" />
-                        <TextBox Grid.Row="8" Grid.Column="2" IsReadOnly="True"
+                        <TextBlock Grid.Row="8" Grid.Column="2" 
                                  Text="{Binding Calibration.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
 
                     </Grid>
                 </StackPanel>
             </GroupBox>
 
-            <GroupBox Header="User Data (Probe related)" Margin="5,5,5,5">
+            <GroupBox Header="User Data (Probe related)" Margin="5,5,5,5" Padding="5">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="2">
                         <TextBlock Text="S/N: "></TextBlock>
                         <TextBox MinWidth="45" Text="{Binding User.PartNumber, Mode=OneWay}" IsReadOnly="True"></TextBox>
                         <TextBlock Text=" - " VerticalAlignment="Center" />
-                        <!--<TextBox MinWidth="20" Text="{Binding User.ProbeType}"></TextBox>
-                        <TextBlock Text=" - " VerticalAlignment="Center" />-->
+                        <TextBox MinWidth="10" Text="{Binding User.SizeNumber}"></TextBox>
+                        <TextBlock Text=" - " VerticalAlignment="Center" />
                         <TextBox MinWidth="45" Text="{Binding User.LotNumber}"></TextBox>
                         <TextBlock Text=" - " VerticalAlignment="Center" />
-                        <TextBox MinWidth="40" Text="{Binding User.Sequence}"></TextBox>
+                        <TextBox MinWidth="25" Text="{Binding User.Sequence}"></TextBox>
                     </StackPanel>
                     <StackPanel Height="5"></StackPanel>
                     <Grid>
@@ -209,22 +212,28 @@
                             <RowDefinition></RowDefinition>
                             <RowDefinition Height="5"></RowDefinition>
                             <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition Height="5"></RowDefinition>
+                            <RowDefinition></RowDefinition>
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Expiry Date:"></TextBlock>
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Probe Usage:"></TextBlock>
-                        <!--<TextBlock Grid.Row="4" Grid.Column="0" Text="Zero Value:"></TextBlock>-->
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Probe Type:"></TextBlock>
-                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Checksum:"></TextBlock>
-                        <DatePicker Grid.Row="0" Grid.Column="2" SelectedDate="{Binding User.ProbeExpiryDate, Mode=TwoWay, TargetNullValue={x:Null}}" />
-                        <TextBox Grid.Row="2" Grid.Column="2"
-                                 Text="{Binding User.ProbeUsageDate, StringFormat={}{0:dd/MM/yyyy}, TargetNullValue=''}" IsReadOnly="True" />
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Schema Ver:"></TextBlock>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Expiry Date:"></TextBlock>
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Probe Usage:"></TextBlock>
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Probe Type:"></TextBlock>
+                        <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:"></TextBlock>
+                        <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding User.Schema}"></TextBox>
+                        <DatePicker Grid.Row="2" Grid.Column="2"
+                                    Language="en-US"
+                                    SelectedDateFormat="Short"
+                                    SelectedDate="{Binding User.ProbeExpiryDate, Mode=TwoWay, TargetNullValue={x:Null}}" />
+                        <TextBox Grid.Row="4" Grid.Column="2"
+                                 Text="{Binding User.ProbeUsageDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}" IsReadOnly="True" />
 
-                        <ComboBox Grid.Row="4" Grid.Column="2" Width="100" HorizontalAlignment="Left"
+                        <ComboBox Grid.Row="6" Grid.Column="2" Width="100" HorizontalAlignment="Left"
                                   ItemsSource="{Binding User.AvailableProbes}"
-                                  SelectedItem="{Binding User.SelectedProbe, Mode=TwoWay}"
-                        />
+                                  SelectedItem="{Binding User.SelectedProbe, Mode=TwoWay}"/>
 
-                        <TextBox Grid.Row="6" Grid.Column="2" IsReadOnly="True"
+                        <TextBlock Grid.Row="8" Grid.Column="2" 
                                  Text="{Binding User.Crc, StringFormat={}{0:X4}, TargetNullValue=''}" />
                     </Grid>
                 </StackPanel>

@@ -29,20 +29,26 @@ namespace OneWire.Common
             // GaugeFactors
             for (int i = 0; i < 4; i++)
             {
-                Array.Copy(BitConverter.GetBytes(GaugeFactors[i]), 0, data, offset, 4);
+                var gfBytes = ByteHelper.ConvertUInt32ToBytesWithWordSwap(GaugeFactors[i]);
+                Array.Copy(gfBytes, 0, data, offset, 4);               
                 offset += 4;
             }
 
             // ReferenceValue
-            Array.Copy(BitConverter.GetBytes(ReferenceValue), 0, data, offset, 4);
+            var refBytes = ByteHelper.ConvertUInt32ToBytesWithWordSwap(ReferenceValue);
+            Array.Copy(refBytes, 0, data, offset, 4);            
             offset += 4;
 
             // ManufactureDate (use DateTime.ToBinary(), 8 bytes)
-            Array.Copy(BitConverter.GetBytes(ManufactureDate.ToBinary()), 0, data, offset, 8);
+            byte[] mfgDateBytes = ByteHelper.ConvertDateTimeToVendorBytes(ManufactureDate);
+            Array.Copy(mfgDateBytes, 0, data, offset, 8);
+            //Array.Copy(BitConverter.GetBytes(ManufactureDate.ToBinary()), 0, data, offset, 8);
             offset += 8;
 
             // ExpiryDate (use DateTime.ToBinary(), 8 bytes)
-            Array.Copy(BitConverter.GetBytes(ExpiryDate.ToBinary()), 0, data, offset, 8);
+            byte[] edBytes = ByteHelper.ConvertDateTimeToVendorBytes(ExpiryDate);
+            Array.Copy(edBytes, 0, data, offset, 8);
+            //Array.Copy(BitConverter.GetBytes(ExpiryDate.ToBinary()), 0, data, offset, 8);
             offset += 8;
 
             // GaugeType
