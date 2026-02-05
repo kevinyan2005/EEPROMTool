@@ -4,7 +4,7 @@
   <PropertyGroup>
     <PartName>OneWire EEPROM Test Tool</PartName>    
     <PartNumber>ST-00239</PartNumber>
-    <PartVersion>1.0.0</PartVersion>
+    <PartVersion>1.0.0.0</PartVersion>
     <PartGUID>04E353BD-1448-461E-87C1-D6CB74EB6DDA</PartGUID>
     <PartDescription>A tool used to test the 1-wire EEPROM</PartDescription>
     <PartExe>OneWireEEPROMWpfApp.exe</PartExe>

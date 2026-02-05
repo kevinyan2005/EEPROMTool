@@ -8,6 +8,7 @@ namespace OneWire.Common
 {
     public static class ByteHelper
     {
+        //private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(ByteHelper));
 
         public static byte[] ConcatenateWithPadding(params byte[][] blocks)
         {
@@ -321,5 +322,40 @@ namespace OneWire.Common
             return data;
         }
 
+
+        public static DateTime? ReadDateTime(byte[] eeprom, int offset)
+        {
+            if (!TryReadDateTimeFromTicks(eeprom, offset, out var dt))
+            {
+                //long raw = (eeprom != null && offset >= 0 && offset + 18 + 8 <= eeprom.Length)
+                //    ? BitConverter.ToInt64(eeprom, offset + 18)
+                //    : 0;
+
+                //Invoke($"Invalid expiry ticks: {raw} at offset {offset + 18}");
+                return null;
+            }
+            return dt;
+        }
+
+        public static bool TryReadDateTimeFromTicks(byte[] eeprom, int offset, out DateTime expiryDate)
+        {
+            expiryDate = default;
+
+            if (eeprom == null) return false;
+            if (offset < 0) return false;
+
+            long ticks = BitConverter.ToInt64(eeprom, offset);
+
+            // Common sentinel/uninitialized patterns
+            if (ticks == 0 || ticks == long.MinValue || ticks == long.MaxValue)
+                return false;
+
+            // Range check before constructing DateTime
+            if (ticks < DateTime.MinValue.Ticks || ticks > DateTime.MaxValue.Ticks)
+                return false;
+
+            expiryDate = new DateTime(ticks, DateTimeKind.Utc);
+            return true;
+        }
     }
 }

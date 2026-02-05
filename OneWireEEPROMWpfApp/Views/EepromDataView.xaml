@@ -223,7 +223,7 @@
                         <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:"></TextBlock>
                         <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding User.Schema}"></TextBox>
                         <DatePicker Grid.Row="2" Grid.Column="2"
-                                    Language="en-US"
+                                    Language="en-CA"
                                     SelectedDateFormat="Short"
                                     SelectedDate="{Binding User.ProbeExpiryDate, Mode=TwoWay, TargetNullValue={x:Null}}" />
                         <TextBox Grid.Row="4" Grid.Column="2"
