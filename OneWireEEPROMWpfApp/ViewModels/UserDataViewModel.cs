@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Linq;
 using OneWire.Common;
@@ -7,7 +8,7 @@ using slf4net;
 
 namespace OneWireEEPROMWpfApp.ViewModels
 {
-    public class UserDataViewModel : ViewModelBase
+    public class UserDataViewModel : ViewModelBase, IDataErrorInfo
     {
         private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(UserDataViewModel));
 
@@ -15,7 +16,13 @@ namespace OneWireEEPROMWpfApp.ViewModels
         private ProbeTypeEnum? _selectedProbe;
         private DateTime? _probeUsageDate;
         private DateTime? _probeExpiryDate;
+        private ushort? _schema;
         private ushort? _crc;
+
+        private const int LenRequiredLen = 1;
+        private const int LotRequiredLen = 5;
+        private const int SequenceRequiredLen = 2;
+
 
         public static readonly IReadOnlyDictionary<ProbeTypeEnum, string> TypeToPartNumber =
             new Dictionary<ProbeTypeEnum, string>
@@ -34,6 +41,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
             if (loadFromData)
             {
+                _schema = model.Schema;
                 _probeUsageDate = model.ProbeUsageDate == default ? (DateTime?)null : model.ProbeUsageDate;
                 _probeExpiryDate = model.ProbeExpiryDate == default ? (DateTime?)null : model.ProbeExpiryDate;
                 _crc = model.Crc16;
@@ -162,12 +170,13 @@ namespace OneWireEEPROMWpfApp.ViewModels
             }
         }
 
-        public ushort Schema
+        public ushort? Schema
         {
-            get => _model.Schema;
+            get => _schema;
             set
             {
-                _model.Schema = value; 
+                if (_model.Schema == value) return;
+                _schema = value; 
                 OnPropertyChanged(); 
                 UpdateCrc();
             }
@@ -204,6 +213,41 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
         #endregion
 
+        #region Validation
+
+        public string Error => null;
+
+        public string this[string propertyName]
+        {
+            get
+            {
+                return propertyName switch
+                {
+                    nameof(SizeNumber) => ValidateExactLength(SizeNumber, LenRequiredLen, "Len"),
+                    nameof(LotNumber) => ValidateExactLength(LotNumber, LotRequiredLen, "Lot"),
+                    nameof(Sequence) => ValidateExactLength(Sequence, SequenceRequiredLen, "Sequence"),
+                    _ => null
+                };
+            }
+        }
+
+        private static string ValidateExactLength(string value, int requiredLength, string label)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return $"{label} is required.";
+            }
+
+            if (value.Length != requiredLength)
+            {
+                return $"{label} must be {requiredLength} characters.";
+            }
+
+            return null;
+        }
+
+        #endregion
+
         #region Helper Methods
         /// <summary>
         /// Support Bi-directional sync. Handles the case where you read the raw bytes
@@ -235,11 +279,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             }
 
             var parts = SplitParts();
-            // Index 0 is updated from the PartNumber property (derived from Enum)
-            // Index 3 (Sequence) is padded to 2 digits
-            int.TryParse(parts[3], out int seqInt);
-
-            _model.ProbeSerialNumber = $"{PartNumber}-{parts[1]}-{parts[2]}-{seqInt:00}";
+            _model.ProbeSerialNumber = BuildProbeSerialNumber(parts, padSequence: true);
             UpdateCrc();
         }
 
@@ -250,8 +290,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
             // Rebuild the full string to save to model
             // Note: We use the enum-based PartNumber for index 0 to stay in sync
-            int.TryParse(parts[3], out int seqInt);
-            _model.ProbeSerialNumber = $"{PartNumber}-{parts[1]}-{parts[2]}-{seqInt:00}";
+            _model.ProbeSerialNumber = BuildProbeSerialNumber(parts, padSequence: false);
 
             NotifySerialNumberProperties();
             UpdateCrc();
@@ -275,6 +314,19 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 parts.ElementAtOrDefault(2) ?? string.Empty,
                 parts.ElementAtOrDefault(3) ?? string.Empty,
             };
+        }
+
+        private string BuildProbeSerialNumber(string[] parts, bool padSequence)
+        {
+		    // Index 3 (Sequence) is padded to 2 digits
+            var sequence = parts[3];
+
+            if (padSequence && int.TryParse(sequence, out int seqInt))
+            {
+                sequence = seqInt.ToString("00");
+            }
+
+            return $"{PartNumber}-{parts[1]}-{parts[2]}-{sequence}";
         }
 
         #endregion

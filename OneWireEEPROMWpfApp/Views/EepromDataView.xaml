@@ -189,11 +189,20 @@
                         <TextBlock Text="S/N: "></TextBlock>
                         <TextBox MinWidth="45" Text="{Binding User.PartNumber, Mode=OneWay}" IsReadOnly="True"></TextBox>
                         <TextBlock Text=" - " VerticalAlignment="Center" />
-                        <TextBox MinWidth="10" Text="{Binding User.SizeNumber}"></TextBox>
+                        <TextBox MinWidth="10"
+                                 MaxLength="1"
+                                 ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"
+                                 Text="{Binding User.SizeNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}"></TextBox>
                         <TextBlock Text=" - " VerticalAlignment="Center" />
-                        <TextBox MinWidth="45" Text="{Binding User.LotNumber}"></TextBox>
+                        <TextBox MinWidth="45"
+                                 MaxLength="5"
+                                 ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"
+                                 Text="{Binding User.LotNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}"></TextBox>
                         <TextBlock Text=" - " VerticalAlignment="Center" />
-                        <TextBox MinWidth="25" Text="{Binding User.Sequence}"></TextBox>
+                        <TextBox MinWidth="25"
+                                 MaxLength="2"
+                                 ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"
+                                 Text="{Binding User.Sequence, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}"></TextBox>
                     </StackPanel>
                     <StackPanel Height="5"></StackPanel>
                     <Grid>
