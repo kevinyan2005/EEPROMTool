@@ -11,8 +11,9 @@
         <converters:InverseBooleanConverter x:Key="InverseBoolConverter" />
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </UserControl.Resources>
-    <StackPanel>
-        <StackPanel Orientation="Horizontal">
+    <Grid>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal">
             <GroupBox Header="Connectivity" Padding="0,6,0,3" Margin="3,0,0,0">
                 <StackPanel Orientation="Horizontal">
                     <Label Content="Port:"></Label>
@@ -58,15 +59,11 @@
                               SelectedItem="{Binding SelectedWriteMode, Mode=TwoWay}" />
                     <Label Content=""></Label>
                     <Button Width="55" Content="Write" Command="{Binding WriteEepromCommand}"></Button>
-                    <Label Content=""></Label>
-                    <Label Content="Progress: "></Label>
-                    <ProgressBar Minimum="0" Maximum="100" Height="20" Width="120" Margin="0,2,0,0"
-                                 Value="{Binding Progress}" />
                 </StackPanel>
             </GroupBox>
-        </StackPanel>
+            </StackPanel>
 
-        <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal">
 
             <GroupBox Header="EEPROM Identification" Margin="5,5,0,5" Padding="5">
 
@@ -248,24 +245,52 @@
                 </StackPanel>
             </GroupBox>
 
+            </StackPanel>
+
+            <StackPanel>
+                <GroupBox Header="Raw Data View" MinHeight="150" Margin="5,5,5,5">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <TextBlock Text="{Binding HexAsciiText}"
+                                       FontFamily="Consolas"
+                                       FontSize="14"
+                                       TextWrapping="NoWrap" />
+                        </ScrollViewer>
+                    </Grid>
+                </GroupBox>
+            </StackPanel>
         </StackPanel>
 
-        <StackPanel>
-            <GroupBox Header="Raw Data View" MinHeight="150" Margin="5,5,5,5">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <TextBlock Text="{Binding HexAsciiText}"
-                                   FontFamily="Consolas"
-                                   FontSize="14"
-                                   TextWrapping="NoWrap" />
-                    </ScrollViewer>
-                </Grid>
-            </GroupBox>
-        </StackPanel>
-    </StackPanel>
+        <Grid Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
+              Background="#77000000">
+            <Border Width="320"
+                    Padding="16"
+                    Background="White"
+                    BorderBrush="#404040"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="EEPROM operation in progress..."
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,8"
+                               HorizontalAlignment="Center" />
+                    <ProgressBar Minimum="0"
+                                 Maximum="100"
+                                 Height="20"
+                                 Value="{Binding Progress}" />
+                    <TextBlock Text="{Binding Progress, StringFormat={}{0}%}"
+                               Margin="0,8,0,0"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
 </UserControl>
