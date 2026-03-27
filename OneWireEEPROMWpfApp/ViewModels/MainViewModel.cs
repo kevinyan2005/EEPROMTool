@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -30,14 +31,17 @@ namespace OneWireEEPROMWpfApp.ViewModels
         public ICommand WriteEepromCommand { get; }
         public ICommand EraseEepromCommand { get; }
         public ICommand LoadJsonCommand { get; }
+        public ICommand LoadRawTxtCommand { get; }
         public ICommand SaveJsonCommand { get; }
         public ICommand ExportHexCommand { get; }
+        public ICommand SaveRawTxtCommand { get; }
         
         private readonly RelayCommand _readEepromCommand;
         private readonly RelayCommand _writeEepromCommand;
         private readonly RelayCommand _eraseEepromCommand;
 
         private EepromData _eeprom;
+        private byte[] _rawEepromBytes;
 
         private DS2431Helper? _helper;
 
@@ -206,11 +210,14 @@ namespace OneWireEEPROMWpfApp.ViewModels
             WriteEepromCommand = _writeEepromCommand;
             EraseEepromCommand = _eraseEepromCommand;
             LoadJsonCommand = new RelayCommand(LoadJson);
+            LoadRawTxtCommand = new RelayCommand(LoadRawTxt);
             SaveJsonCommand = new RelayCommand(SaveJson);
             ExportHexCommand = new RelayCommand(ExportHex);
+            SaveRawTxtCommand = new RelayCommand(SaveRawTxt);
 
             _helper = null;
             _selectedWriteMode = WriteModeUserData;
+            _rawEepromBytes = Array.Empty<byte>();
         }
 
 
@@ -296,6 +303,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         private void ClearUiState()
         {
             _eeprom = new EepromData();
+            _rawEepromBytes = Array.Empty<byte>();
 
             Identification = new IdentificationViewModel(_eeprom.Id);
             Calibration = new CalibrationViewModel(_eeprom.Calibration);
@@ -323,6 +331,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
             var json = File.ReadAllText(path);
             _eeprom = JsonConvert.DeserializeObject<EepromData>(json)!;
+            _rawEepromBytes = BuildEepromImageFromCurrentData();
 
             // Re-wrap VMs around the new data
             Identification = new IdentificationViewModel(_eeprom.Id, loadFromData: true);
@@ -333,6 +342,32 @@ namespace OneWireEEPROMWpfApp.ViewModels
             OnPropertyChanged(nameof(Identification));
             OnPropertyChanged(nameof(Calibration));
             OnPropertyChanged(nameof(User));
+        }
+
+        private void LoadRawTxt()
+        {
+            Logger.Info("Loading EEPROM raw hex data from text file");
+            var path = _fileDialogService.OpenFile("Text files|*.txt");
+            if (path == null) return;
+
+            try
+            {
+                var rawText = File.ReadAllText(path);
+                var bytes = ParseRawHexText(rawText);
+
+                _rawEepromBytes = (byte[])bytes.Clone();
+                HexAsciiText = FormatHexAscii(bytes);
+                ParseEeprom(bytes);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Failed to load raw EEPROM text file.");
+                MessageBox.Show(
+                    "The selected file does not contain valid EEPROM raw hex data.",
+                    "Load RAW txt Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         private void SaveJson()
@@ -357,6 +392,18 @@ namespace OneWireEEPROMWpfApp.ViewModels
             if (path == null) return;
 
             File.WriteAllText(path, HexAsciiText ?? string.Empty);
+        }
+
+        private void SaveRawTxt()
+        {
+            var path = _fileDialogService.SaveFile("Text files|*.txt");
+            if (path == null) return;
+
+            var bytesToSave = _rawEepromBytes != null && _rawEepromBytes.Length > 0
+                ? _rawEepromBytes
+                : BuildEepromImageFromCurrentData();
+
+            File.WriteAllText(path, FormatHexRaw(bytesToSave));
         }
 
         private async Task<T> MeasureAsync<T>(Func<Task<T>> operation, string operationName)
@@ -438,6 +485,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 "Read Entire EEPROM memory");
             Progress = 0; // Reset progress
 
+            _rawEepromBytes = (byte[])bytes.Clone();
             HexAsciiText = FormatHexAscii(bytes);
             if (parseEeprom)
             {
@@ -637,6 +685,74 @@ namespace OneWireEEPROMWpfApp.ViewModels
             }
 
             return sb.ToString();
+        }
+
+        private string FormatHexRaw(byte[] data, int bytesPerLine = 16)
+        {
+            if (data == null || data.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = 0; i < data.Length; i += bytesPerLine)
+            {
+                var bytesThisLine = Math.Min(bytesPerLine, data.Length - i);
+                for (int j = 0; j < bytesThisLine; j++)
+                {
+                    if (j > 0)
+                    {
+                        sb.Append(' ');
+                    }
+
+                    sb.Append(data[i + j].ToString("X2"));
+                }
+
+                sb.AppendLine();
+            }
+
+            return sb.ToString();
+        }
+
+        private byte[] BuildEepromImageFromCurrentData()
+        {
+            byte[] vendorEepromImage = ByteHelper.Concatenate(
+                _eeprom.Id.ToBytes(),
+                _eeprom.Calibration.ToBytes());
+
+            return ByteHelper.ConcatenateWithPadding(
+                vendorEepromImage,
+                _eeprom.User.ToBytes());
+        }
+
+        private static byte[] ParseRawHexText(string rawText)
+        {
+            var matches = Regex.Matches(rawText ?? string.Empty, @"\b(?:0x)?([0-9A-Fa-f]{2})\b");
+            if (matches.Count == 0)
+            {
+                throw new InvalidDataException("No hex bytes found.");
+            }
+
+            var parsed = new byte[matches.Count];
+            for (var i = 0; i < matches.Count; i++)
+            {
+                parsed[i] = byte.Parse(matches[i].Groups[1].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            }
+
+            if (parsed.Length < 128)
+            {
+                throw new InvalidDataException("Not enough EEPROM bytes.");
+            }
+
+            if (parsed.Length == 128)
+            {
+                return parsed;
+            }
+
+            var trimmed = new byte[128];
+            Array.Copy(parsed, trimmed, trimmed.Length);
+            return trimmed;
         }
 
         private void ParseEeprom(byte[] eeprom)
