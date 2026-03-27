@@ -65,185 +65,187 @@
 
             <StackPanel Orientation="Horizontal">
 
-            <GroupBox Header="EEPROM Identification" Margin="5,5,0,5" Padding="5">
-
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"></ColumnDefinition>
-                        <ColumnDefinition Width="5"></ColumnDefinition>
-                        <ColumnDefinition Width="Auto" MinWidth="80"></ColumnDefinition>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="0.5*"></RowDefinition>
-                        <RowDefinition Height="5"></RowDefinition>
-                        <RowDefinition></RowDefinition>
-                        <RowDefinition Height="5"></RowDefinition>
-                        <RowDefinition></RowDefinition>
-                        <RowDefinition Height="5"></RowDefinition>
-                        <RowDefinition></RowDefinition>
-                        <RowDefinition Height="5"></RowDefinition>
-                        <RowDefinition></RowDefinition>
-                        <RowDefinition Height="5"></RowDefinition>
-                        <RowDefinition Height="*"></RowDefinition>
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Model:" />
-                    <TextBox Grid.Row="4" Grid.Column="2"
-                             Text="{Binding Identification.ChipModel, UpdateSourceTrigger=PropertyChanged}"
-                             IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
-
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Version:" />
-                    <TextBox Grid.Row="0" Grid.Column="2"
-                             Text="{Binding Identification.DataVersion, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
-                             IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
-
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="ID:" />
-                    <TextBox Grid.Row="2" Grid.Column="2"
-                             Text="{Binding Identification.DataIdent, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
-                             IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
-
-                    <TextBlock Grid.Row="6" Grid.Column="0" Text="S/N:" />
-                    <TextBox Grid.Row="6" Grid.Column="2"
-                             Text="{Binding Identification.SerialNumber, UpdateSourceTrigger=PropertyChanged}"
-                             IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
-
-                    <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:" />
-                    <TextBlock Grid.Row="8" Grid.Column="2"
-                             Text="{Binding Identification.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue='', Mode=OneWay}" />
-
-                </Grid>
-            </GroupBox>
-
-            <GroupBox Header="Sensor Calibration" Margin="5,5,0,5" Padding="5">
-                <StackPanel Orientation="Horizontal">
-                    <ItemsControl ItemsSource="{Binding Calibration.GaugeFactors}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal" Margin="5">
-                                    <TextBlock Text="{Binding Index, StringFormat='Gauge Factor {0}: '}" />
-                                    <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
-                                             MinWidth="50"
-                                             IsReadOnly="{Binding DataContext.AllowEditCalibration, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBoolConverter}}" />
-                                </StackPanel>
-                            </DataTemplate>
-
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <StackPanel Width="8"></StackPanel>
+                <GroupBox Header="EEPROM Identification" Margin="5,5,0,5" Padding="5">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"></ColumnDefinition>
                             <ColumnDefinition Width="5"></ColumnDefinition>
-                            <ColumnDefinition Width="Auto" MinWidth="50"></ColumnDefinition>
+                            <ColumnDefinition Width="Auto" MinWidth="80"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition></RowDefinition>
-                            <RowDefinition Height="5"></RowDefinition>
-                            <RowDefinition></RowDefinition>
-                            <RowDefinition Height="5"></RowDefinition>
-                            <RowDefinition></RowDefinition>
-                            <RowDefinition Height="5"></RowDefinition>
-                            <RowDefinition></RowDefinition>
-                            <RowDefinition Height="5"></RowDefinition>
-                            <RowDefinition></RowDefinition>
-                            <RowDefinition Height="5"></RowDefinition>
-                            <RowDefinition></RowDefinition>
-                            <RowDefinition Height="5"></RowDefinition>
+                            <RowDefinition Height="20"></RowDefinition>
+                            <RowDefinition Height="10"></RowDefinition>
+                            <RowDefinition Height="20"></RowDefinition>
+                            <RowDefinition Height="10"></RowDefinition>
+                            <RowDefinition Height="20"></RowDefinition>
+                            <RowDefinition Height="10"></RowDefinition>
+                            <RowDefinition Height="20"></RowDefinition>
+                            <RowDefinition Height="10"></RowDefinition>
+                            <RowDefinition Height="20"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
                         </Grid.RowDefinitions>
-
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Ref. Value:" />
-                        <TextBox Grid.Row="0" Grid.Column="2"
-                                 Text="{Binding Calibration.ReferenceValue, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
-                                 IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
-
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Mfg. Date:" />
-                        <!--<TextBox Grid.Row="2" Grid.Column="2" 
-                                     Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
-                        <TextBox Grid.Row="2" Grid.Column="2"
-                                 Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}"
-                                 IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Expiry Date:" />
-                        <!--<TextBox Grid.Row="4" Grid.Column="2" 
-                                     Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Model:" />
                         <TextBox Grid.Row="4" Grid.Column="2"
-                                 Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}"
-                                 IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
-                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Gauge Type:" />
+                                 Text="{Binding Identification.ChipModel, UpdateSourceTrigger=PropertyChanged}"
+                                 IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Version:" />
+                        <TextBox Grid.Row="0" Grid.Column="2"
+                                 Text="{Binding Identification.DataVersion, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                                 IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="ID:" />
+                        <TextBox Grid.Row="2" Grid.Column="2"
+                                 Text="{Binding Identification.DataIdent, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                                 IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="S/N:" />
                         <TextBox Grid.Row="6" Grid.Column="2"
-                                 Text="{Binding Calibration.GaugeType, UpdateSourceTrigger=PropertyChanged}"
-                                 IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
+                                 Text="{Binding Identification.SerialNumber, UpdateSourceTrigger=PropertyChanged}"
+                                 IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
 
                         <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:" />
-                        <TextBlock Grid.Row="8" Grid.Column="2" 
-                                 Text="{Binding Calibration.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
+                        <TextBlock Grid.Row="8" Grid.Column="2"
+                                   Text="{Binding Identification.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue='', Mode=OneWay}" />
 
                     </Grid>
-                </StackPanel>
-            </GroupBox>
+                </GroupBox>
 
-            <GroupBox Header="User Data (Probe related)" Margin="5,5,5,5" Padding="5">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="2">
-                        <TextBlock Text="S/N: "></TextBlock>
-                        <TextBox MinWidth="45" Text="{Binding User.PartNumber, Mode=OneWay}" IsReadOnly="True"></TextBox>
-                        <TextBlock Text=" - " VerticalAlignment="Center" />
-                        <TextBox MinWidth="10"
-                                 MaxLength="1"
-                                 ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"
-                                 Text="{Binding User.SizeNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}"></TextBox>
-                        <TextBlock Text=" - " VerticalAlignment="Center" />
-                        <TextBox MinWidth="45"
-                                 MaxLength="5"
-                                 ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"
-                                 Text="{Binding User.LotNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}"></TextBox>
-                        <TextBlock Text=" - " VerticalAlignment="Center" />
-                        <TextBox MinWidth="25"
-                                 MaxLength="2"
-                                 ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"
-                                 Text="{Binding User.Sequence, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}"></TextBox>
+                <GroupBox Header="Sensor Calibration" Margin="5,5,0,5" Padding="5">
+                    <StackPanel Orientation="Horizontal">
+                        <ItemsControl ItemsSource="{Binding Calibration.GaugeFactors}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="5">
+                                        <TextBlock Text="{Binding Index, StringFormat='Gauge Factor {0}: '}" />
+                                        <TextBox
+                                            Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                                            MinWidth="50"
+                                            IsReadOnly="{Binding DataContext.AllowEditCalibration, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBoolConverter}}" />
+                                    </StackPanel>
+                                </DataTemplate>
+
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <StackPanel Width="8"></StackPanel>
+
+                        <Grid Margin="5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                <ColumnDefinition Width="5"></ColumnDefinition>
+                                <ColumnDefinition Width="Auto" MinWidth="50"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="20"></RowDefinition>
+                                <RowDefinition Height="10"></RowDefinition>
+                                <RowDefinition Height="20"></RowDefinition>
+                                <RowDefinition Height="10"></RowDefinition>
+                                <RowDefinition Height="20"></RowDefinition>
+                                <RowDefinition Height="10"></RowDefinition>
+                                <RowDefinition Height="20"></RowDefinition>
+                                <RowDefinition Height="10"></RowDefinition>
+                                <RowDefinition Height="20"></RowDefinition>
+                                <RowDefinition Height="*"></RowDefinition>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Ref. Value:" />
+                            <TextBox Grid.Row="0" Grid.Column="2"
+                                     Text="{Binding Calibration.ReferenceValue, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                                     IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Mfg. Date:" />
+                            <!--<TextBox Grid.Row="2" Grid.Column="2" 
+                  Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
+                            <TextBox Grid.Row="2" Grid.Column="2"
+                                     Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}"
+                                     IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Expiry Date:" />
+                            <!--<TextBox Grid.Row="4" Grid.Column="2" 
+                  Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
+                            <TextBox Grid.Row="4" Grid.Column="2"
+                                     Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}"
+                                     IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Gauge Type:" />
+                            <TextBox Grid.Row="6" Grid.Column="2"
+                                     Text="{Binding Calibration.GaugeType, UpdateSourceTrigger=PropertyChanged}"
+                                     IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
+
+                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:" />
+                            <TextBlock Grid.Row="8" Grid.Column="2"
+                                       Text="{Binding Calibration.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
+
+                        </Grid>
                     </StackPanel>
-                    <StackPanel Height="5"></StackPanel>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"></ColumnDefinition>
-                            <ColumnDefinition Width="5"></ColumnDefinition>
-                            <ColumnDefinition></ColumnDefinition>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition></RowDefinition>
-                            <RowDefinition Height="5"></RowDefinition>
-                            <RowDefinition></RowDefinition>
-                            <RowDefinition Height="5"></RowDefinition>
-                            <RowDefinition Height="23.7"></RowDefinition>
-                            <RowDefinition Height="5"></RowDefinition>
-                            <RowDefinition></RowDefinition>
-                            <RowDefinition Height="5"></RowDefinition>
-                            <RowDefinition></RowDefinition>
-                            <RowDefinition></RowDefinition>
-                            <RowDefinition Height="5"></RowDefinition>
-                            <RowDefinition></RowDefinition>
-                        </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Schema Ver:"></TextBlock>
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Expiry Date:"></TextBlock>
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Probe Usage:"></TextBlock>
-                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Probe Type:"></TextBlock>
-                        <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:"></TextBlock>
-                        <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding User.Schema}"></TextBox>
-                        <DatePicker Grid.Row="2" Grid.Column="2"
-                                    Language="en-CA"
-                                    SelectedDateFormat="Short"
-                                    SelectedDate="{Binding User.ProbeExpiryDate, Mode=TwoWay, TargetNullValue={x:Null}}" />
-                        <TextBox Grid.Row="4" Grid.Column="2"
-                                 Text="{Binding User.ProbeUsageDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}" IsReadOnly="True" />
+                </GroupBox>
 
-                        <ComboBox Grid.Row="6" Grid.Column="2" Width="100" HorizontalAlignment="Left"
-                                  ItemsSource="{Binding User.AvailableProbes}"
-                                  SelectedItem="{Binding User.SelectedProbe, Mode=TwoWay}"/>
+                <GroupBox Header="User Data (Probe related)" Margin="5,5,5,5" Padding="5">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="2">
+                            <TextBlock Text="S/N: "></TextBlock>
+                            <TextBox MinWidth="45" Text="{Binding User.PartNumber, Mode=OneWay}" IsReadOnly="True"></TextBox>
+                            <TextBlock Text=" - " VerticalAlignment="Center" />
+                            <TextBox MinWidth="10"
+                                     MaxLength="1"
+                                     ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"
+                                     Text="{Binding User.SizeNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}">
+                            </TextBox>
+                            <TextBlock Text=" - " VerticalAlignment="Center" />
+                            <TextBox MinWidth="45"
+                                     MaxLength="5"
+                                     ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"
+                                     Text="{Binding User.LotNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}">
+                            </TextBox>
+                            <TextBlock Text=" - " VerticalAlignment="Center" />
+                            <TextBox MinWidth="25"
+                                     MaxLength="2"
+                                     ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"
+                                     Text="{Binding User.Sequence, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}">
+                            </TextBox>
+                        </StackPanel>
+                        <StackPanel Height="5"></StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                <ColumnDefinition Width="5"></ColumnDefinition>
+                                <ColumnDefinition></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition></RowDefinition>
+                                <RowDefinition Height="5"></RowDefinition>
+                                <RowDefinition></RowDefinition>
+                                <RowDefinition Height="5"></RowDefinition>
+                                <RowDefinition Height="23.7"></RowDefinition>
+                                <RowDefinition Height="5"></RowDefinition>
+                                <RowDefinition></RowDefinition>
+                                <RowDefinition Height="5"></RowDefinition>
+                                <RowDefinition></RowDefinition>
+                                <RowDefinition></RowDefinition>
+                                <RowDefinition Height="5"></RowDefinition>
+                                <RowDefinition></RowDefinition>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Schema Ver:"></TextBlock>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Expiry Date:"></TextBlock>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Probe Usage:"></TextBlock>
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Probe Type:"></TextBlock>
+                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:"></TextBlock>
+                            <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding User.Schema}"></TextBox>
+                            <DatePicker Grid.Row="2" Grid.Column="2"
+                                        Language="en-CA"
+                                        SelectedDateFormat="Short"
+                                        SelectedDate="{Binding User.ProbeExpiryDate, Mode=TwoWay, TargetNullValue={x:Null}}" />
+                            <TextBox Grid.Row="4" Grid.Column="2"
+                                     Text="{Binding User.ProbeUsageDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}"
+                                     IsReadOnly="True" />
 
-                        <TextBlock Grid.Row="8" Grid.Column="2" 
-                                 Text="{Binding User.Crc, StringFormat={}{0:X4}, TargetNullValue=''}" />
-                    </Grid>
-                </StackPanel>
-            </GroupBox>
+                            <ComboBox Grid.Row="6" Grid.Column="2" Width="100" HorizontalAlignment="Left"
+                                      ItemsSource="{Binding User.AvailableProbes}"
+                                      SelectedItem="{Binding User.SelectedProbe, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="8" Grid.Column="2"
+                                       Text="{Binding User.Crc, StringFormat={}{0:X4}, TargetNullValue=''}" />
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
 
             </StackPanel>
 

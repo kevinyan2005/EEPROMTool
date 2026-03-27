@@ -177,8 +177,18 @@ namespace OneWireEEPROMWpfApp.ViewModels
             {
                 if (_model.Schema == value) return;
                 _schema = value; 
-                OnPropertyChanged(); 
-                UpdateCrc();
+                if (value.HasValue)
+                {
+                    _model.Schema = value.Value;
+                    UpdateCrc();
+                }
+                else
+                {
+                    _crc = null;
+                    OnPropertyChanged(nameof(Crc));
+                }
+                OnPropertyChanged();
+
             }
         }
 
