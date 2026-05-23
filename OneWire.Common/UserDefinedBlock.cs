@@ -39,7 +39,12 @@ namespace OneWire.Common
             Crc16 = CrcHelper.ComputeCrc16(data, data.Length);
             byte[] withCrc = new byte[data.Length + 10];
             Array.Copy(data, withCrc, data.Length);
-            Array.Copy(BitConverter.GetBytes(Crc16), 0, withCrc, data.Length, 2);
+            //Array.Copy(BitConverter.GetBytes(Crc16), 0, withCrc, data.Length, 2);
+
+            var crc16Bytes = BitConverter.GetBytes(Crc16);
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(crc16Bytes);
+            Array.Copy(crc16Bytes, 0, withCrc, data.Length, 2);
 
             // ProbeUsageDate
             byte[] pudBytes = BitConverter.GetBytes(ProbeUsageDate.ToBinary());
