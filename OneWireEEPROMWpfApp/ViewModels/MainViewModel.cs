@@ -1,19 +1,15 @@
-﻿using Newtonsoft.Json;
-using OneWire.Common;
-using OneWireController;
-using OneWireEEPROMWpfApp.Models;
-using slf4net;
 using System;
-using System.Diagnostics;
-using System.IO;
+using System.Configuration;
 using System.Globalization;
+using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using OneWire.Common;
+using OneWire.Services;
 using OneWireEEPROMWpfApp.Views;
-using System.Configuration;
+using slf4net;
 
 namespace OneWireEEPROMWpfApp.ViewModels
 {
@@ -22,6 +18,9 @@ namespace OneWireEEPROMWpfApp.ViewModels
         private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(MainViewModel));
 
         private readonly IFileDialogService _fileDialogService;
+        private readonly IEepromService _eepromService;
+        private readonly IEepromFileService _fileService;
+
         public IdentificationViewModel Identification { get; private set; }
         public CalibrationViewModel Calibration { get; private set; }
         public UserDataViewModel User { get; private set; }
@@ -35,15 +34,14 @@ namespace OneWireEEPROMWpfApp.ViewModels
         public ICommand SaveJsonCommand { get; }
         public ICommand ExportHexCommand { get; }
         public ICommand SaveRawTxtCommand { get; }
-        
+
         private readonly RelayCommand _readEepromCommand;
         private readonly RelayCommand _writeEepromCommand;
         private readonly RelayCommand _eraseEepromCommand;
 
         private EepromData _eeprom;
         private byte[] _rawEepromBytes;
-
-        private DS2431Helper? _helper;
+        private readonly byte _eraseFillByte;
 
         private const string WriteModeEntire = "Entire EEPROM";
         private const string WriteModeUserData = "User Data Only";
@@ -67,9 +65,19 @@ namespace OneWireEEPROMWpfApp.ViewModels
         public string SelectedPort
         {
             get => _selectedPort;
+            set { _selectedPort = value; OnPropertyChanged(); }
+        }
+
+        public AdapterType[] AdapterTypes { get; } = (AdapterType[])Enum.GetValues(typeof(AdapterType));
+
+        private AdapterType _selectedAdapterType;
+        public AdapterType SelectedAdapterType
+        {
+            get => _selectedAdapterType;
             set
             {
-                _selectedPort = value;
+                if (_selectedAdapterType == value) return;
+                _selectedAdapterType = value;
                 OnPropertyChanged();
             }
         }
@@ -88,79 +96,46 @@ namespace OneWireEEPROMWpfApp.ViewModels
             }
         }
 
-        private bool _useOverrideSpeed;
-        private readonly byte _eraseFillByte;
-
         private bool _allowEditIdentification;
         public bool AllowEditIdentification
         {
             get => _allowEditIdentification;
-            set
-            {
-                if (_allowEditIdentification == value) return;
-                _allowEditIdentification = value;
-                OnPropertyChanged();
-            }
+            set { if (_allowEditIdentification == value) return; _allowEditIdentification = value; OnPropertyChanged(); }
         }
 
         private bool _allowEditCalibration;
         public bool AllowEditCalibration
         {
             get => _allowEditCalibration;
-            set
-            {
-                if (_allowEditCalibration == value) return;
-                _allowEditCalibration = value;
-                OnPropertyChanged();
-            }
+            set { if (_allowEditCalibration == value) return; _allowEditCalibration = value; OnPropertyChanged(); }
         }
 
         private bool _showOverdriveCheckbox;
         public bool ShowOverdriveCheckbox
         {
             get => _showOverdriveCheckbox;
-            set
-            {
-                if (_showOverdriveCheckbox == value) return;
-                _showOverdriveCheckbox = value;
-                OnPropertyChanged();
-            }
+            set { if (_showOverdriveCheckbox == value) return; _showOverdriveCheckbox = value; OnPropertyChanged(); }
         }
 
-        /// <summary>
-        /// True = Override speed, False = Standard speed
-        /// </summary>
+        private bool _useOverrideSpeed;
         public bool UseOverrideSpeed
         {
             get => _useOverrideSpeed;
             set
             {
-                if (_useOverrideSpeed != value)
-                {
-                    _useOverrideSpeed = value;
-                    OnPropertyChanged();
-
-                    // Call hardware switch when toggled
-                    if (_useOverrideSpeed)
-                    {
-                        _helper?.EnterOverdrive();
-                    }
-                    else
-                    {
-                        _helper?.EnterStandard();
-                    }
-                }
+                if (_useOverrideSpeed == value) return;
+                _useOverrideSpeed = value;
+                OnPropertyChanged();
+                if (_eepromService.IsConnected)
+                    _eepromService.SetSpeed(_useOverrideSpeed);
             }
         }
+
         private int _progress;
         public int Progress
         {
             get => _progress;
-            set
-            {
-                _progress = value;
-                OnPropertyChanged(nameof(Progress));
-            }
+            set { _progress = value; OnPropertyChanged(); }
         }
 
         private string _hexAsciiText;
@@ -185,19 +160,20 @@ namespace OneWireEEPROMWpfApp.ViewModels
             }
         }
 
-        public MainViewModel(IFileDialogService fileDialogService)
+        public MainViewModel(IFileDialogService fileDialogService, IEepromService eepromService, IEepromFileService fileService)
         {
             SelectedPort = ConfigurationManager.AppSettings["DefaultPort"] ?? "USB1";
-
+            _selectedAdapterType = GetAppSettingAdapterType("AdapterType", AdapterType.DS9490);
             AllowEditIdentification = GetAppSettingBool("AllowEditIdentification", defaultValue: true);
             AllowEditCalibration = GetAppSettingBool("AllowEditCalibration", defaultValue: true);
             ShowOverdriveCheckbox = GetAppSettingBool("ShowOverdriveCheckbox", defaultValue: false);
             _eraseFillByte = GetAppSettingByte("EraseFillByte", 0x00);
 
             _fileDialogService = fileDialogService;
+            _eepromService = eepromService;
+            _fileService = fileService;
 
             _eeprom = new EepromData();
-
             Identification = new IdentificationViewModel(_eeprom.Id);
             Calibration = new CalibrationViewModel(_eeprom.Calibration);
             User = new UserDataViewModel(_eeprom.User);
@@ -215,63 +191,22 @@ namespace OneWireEEPROMWpfApp.ViewModels
             ExportHexCommand = new RelayCommand(ExportHex);
             SaveRawTxtCommand = new RelayCommand(SaveRawTxt);
 
-            _helper = null;
             _selectedWriteMode = WriteModeUserData;
             _rawEepromBytes = Array.Empty<byte>();
         }
 
-
         public void OnAppClosing()
         {
-            // Save settings, prompt user, release resources, etc.
-            _helper?.Disconnect();
+            _eepromService.Disconnect();
         }
 
-
-        #region Helpers
-
-        private static bool GetAppSettingBool(string key, bool defaultValue)
-        {
-            var raw = ConfigurationManager.AppSettings[key];
-            if (bool.TryParse(raw, out var value))
-            {
-                return value;
-            }
-
-            return defaultValue;
-        }
-
-        private static byte GetAppSettingByte(string key, byte defaultValue)
-        {
-            var raw = ConfigurationManager.AppSettings[key];
-            if (string.IsNullOrWhiteSpace(raw))
-            {
-                return defaultValue;
-            }
-
-            raw = raw.Trim();
-            if (raw.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-            {
-                if (byte.TryParse(raw.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hexValue))
-                {
-                    return hexValue;
-                }
-            }
-            else if (byte.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
-            {
-                return value;
-            }
-
-            return defaultValue;
-        }
+        #region Commands
 
         private void TogglePort()
         {
             if (IsPortOpen)
             {
-                _helper?.Reset();
-                _helper?.Disconnect();
-                _helper = null;
+                _eepromService.Disconnect();
                 IsPortOpen = false;
                 ClearUiState();
                 ClearRawDataView();
@@ -280,9 +215,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             {
                 try
                 {
-                    _helper = new DS2431Helper(SelectedPort);
-                    _helper.Connect();
-                    _helper.OWReset();
+                    _eepromService.Connect(SelectedAdapterType, SelectedPort);
                     IsPortOpen = true;
                 }
                 catch (Exception ex)
@@ -293,70 +226,112 @@ namespace OneWireEEPROMWpfApp.ViewModels
                         "Connection Error",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
-                    _helper?.Disconnect();
-                    _helper = null;
                     IsPortOpen = false;
                 }
             }
         }
 
-        private void ClearUiState()
+        private async Task LoadMemoryAsync()
         {
-            _eeprom = new EepromData();
-            _rawEepromBytes = Array.Empty<byte>();
-
-            Identification = new IdentificationViewModel(_eeprom.Id);
-            Calibration = new CalibrationViewModel(_eeprom.Calibration);
-            User = new UserDataViewModel(_eeprom.User);
-
-            //HexAsciiText = string.Empty;
-            Progress = 0;
-            IsBusy = false;
-
-            OnPropertyChanged(nameof(Identification));
-            OnPropertyChanged(nameof(Calibration));
-            OnPropertyChanged(nameof(User));
+            IsBusy = true;
+            try { await ReadEepromInternalAsync(); }
+            finally { IsBusy = false; }
         }
 
-        private void ClearRawDataView()
+        private async Task WriteMemoryAsync()
         {
-            HexAsciiText = string.Empty;
+            var (dialogTitle, message) = SelectedWriteMode == WriteModeUserData
+                ? ("Confirm Write", "Proceed with writing user data to EEPROM?")
+                : SelectedWriteMode == WriteModeErase
+                    ? ("Confirm Erase", "Erase the entire EEPROM?")
+                    : ("Confirm Write", "Proceed with writing entire EEPROM?");
+
+            var dialog = new ConfirmWriteDialog
+            {
+                Owner = Application.Current?.MainWindow,
+                DialogTitle = dialogTitle,
+                Message = message
+            };
+            dialog.DataContext = dialog;
+
+            if (dialog.ShowDialog() != true) return;
+
+            IsBusy = true;
+            try
+            {
+                var mode = SelectedWriteMode == WriteModeErase ? WriteMode.Erase
+                    : SelectedWriteMode == WriteModeUserData ? WriteMode.UserDataOnly
+                    : WriteMode.Entire;
+                await ExecuteWriteAsync(mode);
+            }
+            finally { IsBusy = false; }
+        }
+
+        private async Task EraseMemoryAsync()
+        {
+            var dialog = new ConfirmWriteDialog
+            {
+                Owner = Application.Current?.MainWindow,
+                DialogTitle = "Confirm Erase",
+                Message = "Erase the entire EEPROM?"
+            };
+            dialog.DataContext = dialog;
+
+            if (dialog.ShowDialog() != true) return;
+
+            IsBusy = true;
+            try { await ExecuteWriteAsync(WriteMode.Erase); }
+            finally { IsBusy = false; }
+        }
+
+        private async Task ExecuteWriteAsync(WriteMode mode)
+        {
+            var progress = new Progress<int>(p => Progress = p);
+            var bytes = await _eepromService.WriteAsync(_eeprom, mode, _eraseFillByte, progress);
+            Progress = 0;
+            _rawEepromBytes = (byte[])bytes.Clone();
+            HexAsciiText = _fileService.FormatHexAscii(bytes);
+
+            if (mode == WriteMode.Erase)
+                ClearUiState();
+            else
+                ParseEeprom(bytes);
         }
 
         private void LoadJson()
         {
-            Logger.Info("Loading EEPROM data from JSON file");
             var path = _fileDialogService.OpenFile("JSON files|*.json");
             if (path == null) return;
 
-            var json = File.ReadAllText(path);
-            _eeprom = JsonConvert.DeserializeObject<EepromData>(json)!;
-            _rawEepromBytes = BuildEepromImageFromCurrentData();
+            _eeprom = _fileService.LoadFromJson(path);
+            _rawEepromBytes = BuildEepromImage();
 
-            // Re-wrap VMs around the new data
             Identification = new IdentificationViewModel(_eeprom.Id, loadFromData: true);
             Calibration = new CalibrationViewModel(_eeprom.Calibration, loadFromData: true);
             User = new UserDataViewModel(_eeprom.User, loadFromData: true);
 
-            // Notify UI that these VM references changed
             OnPropertyChanged(nameof(Identification));
             OnPropertyChanged(nameof(Calibration));
             OnPropertyChanged(nameof(User));
         }
 
+        private void SaveJson()
+        {
+            var path = _fileDialogService.SaveFile("JSON files|*.json");
+            if (path == null) return;
+            _fileService.SaveToJson(_eeprom, path);
+        }
+
         private void LoadRawTxt()
         {
-            Logger.Info("Loading EEPROM raw hex data from text file");
             var path = _fileDialogService.OpenFile("Text files|*.txt");
             if (path == null) return;
 
             try
             {
-                var rawText = File.ReadAllText(path);
-                var bytes = ParseRawHexText(rawText);
-
+                var bytes = _fileService.LoadFromRawTxt(path);
                 _rawEepromBytes = (byte[])bytes.Clone();
-                HexAsciiText = FormatHexAscii(bytes);
+                HexAsciiText = _fileService.FormatHexAscii(bytes);
                 ParseEeprom(bytes);
             }
             catch (Exception ex)
@@ -370,406 +345,51 @@ namespace OneWireEEPROMWpfApp.ViewModels
             }
         }
 
-        private void SaveJson()
+        private void SaveRawTxt()
         {
-            Logger.Info("Saving EEPROM data to JSON file");
-            var path = _fileDialogService.SaveFile("JSON files|*.json");
+            var path = _fileDialogService.SaveFile("Text files|*.txt");
             if (path == null) return;
-
-            var json = JsonConvert.SerializeObject(
-                _eeprom,
-                Formatting.Indented, //pretty-print 
-                new JsonSerializerSettings
-                {
-                    DateFormatString = "yyyy-MM-ddTHH:mm:ss"  //ISO 8601
-                });
-            File.WriteAllText(path, json);
+            var data = _rawEepromBytes != null && _rawEepromBytes.Length > 0
+                ? _rawEepromBytes
+                : BuildEepromImage();
+            _fileService.SaveToRawTxt(data, path);
         }
 
         private void ExportHex()
         {
             var path = _fileDialogService.SaveFile("Text files|*.txt");
             if (path == null) return;
-
             File.WriteAllText(path, HexAsciiText ?? string.Empty);
         }
 
-        private void SaveRawTxt()
+        #endregion
+
+        #region Helpers
+
+        private bool CanStartOperation() => IsPortOpen && !IsBusy;
+
+        private async Task ReadEepromInternalAsync(bool parse = true)
         {
-            var path = _fileDialogService.SaveFile("Text files|*.txt");
-            if (path == null) return;
-
-            var bytesToSave = _rawEepromBytes != null && _rawEepromBytes.Length > 0
-                ? _rawEepromBytes
-                : BuildEepromImageFromCurrentData();
-
-            File.WriteAllText(path, FormatHexRaw(bytesToSave));
-        }
-
-        private async Task<T> MeasureAsync<T>(Func<Task<T>> operation, string operationName)
-        {
-            Logger.Info($"{operationName} started...");
-            var stopwatch = Stopwatch.StartNew();
-
-            try
-            {
-                var result = await operation();
-                stopwatch.Stop();
-                Logger.Info($"{operationName} completed in {stopwatch.ElapsedMilliseconds:N0} ms.");
-                return result;
-            }
-            catch (Exception ex)
-            {
-                stopwatch.Stop();
-                Logger.Error(ex, $"{operationName} failed after {stopwatch.ElapsedMilliseconds:N0} ms.");
-                throw;
-            }
-        }
-
-        private async Task MeasureAsync(Func<Task> operation, string operationName)
-        {
-            Logger.Info($"{operationName} started...");
-            var stopwatch = Stopwatch.StartNew();
-
-            try
-            {
-                await operation();
-                stopwatch.Stop();
-                Logger.Info($"{operationName} completed in {stopwatch.ElapsedMilliseconds:N0} ms.");
-            }
-            catch (Exception ex)
-            {
-                stopwatch.Stop();
-                Logger.Error(ex, $"{operationName} failed after {stopwatch.ElapsedMilliseconds:N0} ms.");
-                throw;
-            }
-        }
-
-        private bool CanStartOperation()
-        {
-            return IsPortOpen && !IsBusy;
-        }
-
-        private async Task LoadMemoryAsync()
-        {
-            IsBusy = true;
-            try
-            {
-                await ReadEepromAsync();
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        private async Task ReadEepromAsync(bool parseEeprom = true)
-        {
-            //Read the entire memory in one continuous read operation
-            //var bytes = await MeasureAsync(
-            //    () => _helper.ReadMemoryAsync(0, 128, overdrive: false),
-            //    "Read Entire EEPROM memory");
-
-            // Read 8 bytes or a page at a time
-            //var progressIndicator = new Progress<int>(percent => Progress = percent);
-
-            //var bytes = await MeasureAsync(
-            //    () => _helper.ReadMemoryAsync(0, 128, overdrive: false, progressIndicator),
-            //    "Read Entire EEPROM memory");
-
-            //Progress = 0; // Reset progress
-
-            var progressIndicator = new Progress<int>(percent => Progress = percent);
-            var bytes = await MeasureAsync(
-                () => _helper.ReadEntireMemoryAsync(overdrive: false, progressIndicator),
-                "Read Entire EEPROM memory");
-            Progress = 0; // Reset progress
-
+            var progress = new Progress<int>(p => Progress = p);
+            var bytes = await _eepromService.ReadAsync(progress);
+            Progress = 0;
             _rawEepromBytes = (byte[])bytes.Clone();
-            HexAsciiText = FormatHexAscii(bytes);
-            if (parseEeprom)
-            {
-                ParseEeprom(bytes);
-            }
-        }
-
-        //private async Task ReadEepromAsync()
-        //{
-        //    Logger.Info("Read Entire EEPROM memory...");
-        //    var stopwatch = Stopwatch.StartNew();
-
-        //    var bytes = !UseOverrideSpeed ? await _helper.ReadMemoryAsync(0, 128, overdrive: false) 
-        //        : await _helper.ReadMemoryAsync(0, 128, overdrive: true);
-
-        //    stopwatch.Stop();
-        //    Logger.Info($"ReadEntireMemory took {stopwatch.ElapsedMilliseconds:N0} ms.");
-        //    HexAsciiText = FormatHexAscii(bytes);
-        //    ParseEeprom(bytes);
-        //}
-
-        private async Task WriteMemoryAsync()
-        {
-            var dialogTitle = "Confirm Write";
-            var message = "Proceed with writing entire EEPROM?";
-
-            if (SelectedWriteMode == WriteModeUserData)
-            {
-                message = "Proceed with writing user data to EEPROM?";
-            }
-            else if (SelectedWriteMode == WriteModeErase)
-            {
-                dialogTitle = "Confirm Erase";
-                message = "Erase the entire EEPROM?";
-            }
-
-            var confirmDialog = new ConfirmWriteDialog
-            {
-                Owner = Application.Current?.MainWindow,
-                DialogTitle = dialogTitle,
-                Message = message
-            };
-            confirmDialog.DataContext = confirmDialog;
-
-            if (confirmDialog.ShowDialog() != true)
-            {
-                return;
-            }
-
-            IsBusy = true;
-            try
-            {
-                if (SelectedWriteMode == WriteModeErase)
-                {
-                    await EraseEepromAsync();
-                }
-                else if (SelectedWriteMode == WriteModeUserData)
-                {
-                    await WriteUserDataEepromAsync();
-                }
-                else
-                {
-                    await WriteEntireEepromAsync();
-                }
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        private async Task EraseMemoryAsync()
-        {
-            // Keeping the UI dialog logic separate
-            var confirmDialog = new ConfirmWriteDialog
-            {
-                Owner = Application.Current?.MainWindow,
-                DialogTitle = "Confirm Erase",
-                Message = "Erase the entire EEPROM?"
-            };
-            confirmDialog.DataContext = confirmDialog;
-
-            if (confirmDialog.ShowDialog() == true)
-            {
-                IsBusy = true;
-                try
-                {
-                    await EraseEepromAsync();
-                }
-                finally
-                {
-                    IsBusy = false;
-                }
-            }
-        }
-
-        private async Task EraseEepromAsync()
-        {
-            var progressIndicator = new Progress<int>(percent => Progress = percent);
-            var eepromImage = new byte[128];
-            for (var i = 0; i < eepromImage.Length; i++)
-            {
-                eepromImage[i] = _eraseFillByte;
-            }
-
-            await ExecuteEepromWriteAsync(
-                0,
-                eepromImage,
-                "Erase Entire EEPROM memory",
-                parseAfterRead: false);
-
-            ClearUiState();
-        }
-
-        private async Task WriteEntireEepromAsync()
-        {
-            byte[] vendorEepromImage = ByteHelper.Concatenate(
-                _eeprom.Id.ToBytes(),
-                _eeprom.Calibration.ToBytes());
-
-            byte[] eepromImage = ByteHelper.ConcatenateWithPadding(
-                vendorEepromImage, 
-                _eeprom.User.ToBytes());
-
-            await ExecuteEepromWriteAsync(0, eepromImage, "Write Entire EEPROM memory");
-        }
-
-        private async Task WriteUserDataEepromAsync()
-        {
-            const ushort userAreaStartAddress = 80;
-            byte[] userData = _eeprom.User.ToBytes();
-
-            await ExecuteEepromWriteAsync(userAreaStartAddress, userData, "Write User-defined EEPROM memory");
-        }
-
-        private async Task ExecuteEepromWriteAsync(
-            ushort address,
-            byte[] data,
-            string description,
-            bool parseAfterRead = true)
-        {
-            if (data == null || data.Length == 0)
-            {
-                Logger.Warn($"Write cancelled: No data provided for {description}.");
-                return;
-            }
-
-            var progressIndicator = new Progress<int>(percent => Progress = percent);
-
-            try
-            {
-                await MeasureAsync(
-                    () => _helper.WriteMemoryAsync(address, data, false, progressIndicator),
-                    description
-                );
-                Logger.Info($"{description} completed successfully.");
-            }
-            finally
-            {
-                Progress = 0; // Always reset progress even if write fails
-                await ReadEepromAsync(parseAfterRead); // Refresh local cache from hardware
-               
-            }
-        }
-
-        private string FormatHexAscii(byte[] data, int bytesPerLine = 16)
-        {
-            StringBuilder sb = new StringBuilder();
-
-            for (int i = 0; i < data.Length; i += bytesPerLine)
-            {
-                sb.Append($"{i:X8}  ");
-
-                for (int j = 0; j < bytesPerLine; j++)
-                {
-                    if (i + j < data.Length)
-                        sb.Append($"{data[i + j]:X2} ");
-                    else
-                        sb.Append("   ");
-
-                    if (j == 7) sb.Append(" ");
-                }
-
-                sb.Append(" ");
-
-                for (int j = 0; j < bytesPerLine; j++)
-                {
-                    if (i + j < data.Length)
-                    {
-                        byte b = data[i + j];
-                        char c = (b >= 32 && b <= 126) ? (char)b : '.';
-                        sb.Append(c);
-                    }
-                }
-
-                sb.AppendLine();
-            }
-
-            return sb.ToString();
-        }
-
-        private string FormatHexRaw(byte[] data, int bytesPerLine = 16)
-        {
-            if (data == null || data.Length == 0)
-            {
-                return string.Empty;
-            }
-
-            StringBuilder sb = new StringBuilder();
-
-            for (int i = 0; i < data.Length; i += bytesPerLine)
-            {
-                var bytesThisLine = Math.Min(bytesPerLine, data.Length - i);
-                for (int j = 0; j < bytesThisLine; j++)
-                {
-                    if (j > 0)
-                    {
-                        sb.Append(' ');
-                    }
-
-                    sb.Append(data[i + j].ToString("X2"));
-                }
-
-                sb.AppendLine();
-            }
-
-            return sb.ToString();
-        }
-
-        private byte[] BuildEepromImageFromCurrentData()
-        {
-            byte[] vendorEepromImage = ByteHelper.Concatenate(
-                _eeprom.Id.ToBytes(),
-                _eeprom.Calibration.ToBytes());
-
-            return ByteHelper.ConcatenateWithPadding(
-                vendorEepromImage,
-                _eeprom.User.ToBytes());
-        }
-
-        private static byte[] ParseRawHexText(string rawText)
-        {
-            var matches = Regex.Matches(rawText ?? string.Empty, @"\b(?:0x)?([0-9A-Fa-f]{2})\b");
-            if (matches.Count == 0)
-            {
-                throw new InvalidDataException("No hex bytes found.");
-            }
-
-            var parsed = new byte[matches.Count];
-            for (var i = 0; i < matches.Count; i++)
-            {
-                parsed[i] = byte.Parse(matches[i].Groups[1].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-            }
-
-            if (parsed.Length < 128)
-            {
-                throw new InvalidDataException("Not enough EEPROM bytes.");
-            }
-
-            if (parsed.Length == 128)
-            {
-                return parsed;
-            }
-
-            var trimmed = new byte[128];
-            Array.Copy(parsed, trimmed, trimmed.Length);
-            return trimmed;
+            HexAsciiText = _fileService.FormatHexAscii(bytes);
+            if (parse) ParseEeprom(bytes);
         }
 
         private void ParseEeprom(byte[] eeprom)
         {
             try
             {
-                // Identification (example: first 16 bytes = serial number)
                 var offset = 0;
                 Identification.DataVersion = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset);
                 Identification.DataIdent = Encoding.ASCII.GetString(eeprom, offset + 2, 2).TrimEnd('\0');
                 Identification.ChipModel = Encoding.ASCII.GetString(eeprom, offset + 4, 16).TrimEnd('\0');
                 Identification.SerialNumber = Encoding.ASCII.GetString(eeprom, offset + 20, 16).TrimEnd('\0');
                 Identification.Crc = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + 36);
-                Logger.Debug("Identification data parsed successfully");
 
-                // Calibration (example: uint32 at 0x28)
-                offset = 38; 
+                offset = 38;
                 Calibration.GaugeFactors[0].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset);
                 Calibration.GaugeFactors[1].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + 4);
                 Calibration.GaugeFactors[2].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + 8);
@@ -779,41 +399,65 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 Calibration.ExpiryDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + 28);
                 Calibration.GaugeType = Encoding.ASCII.GetString(eeprom, offset + 36, 2).TrimEnd('\0');
                 Calibration.Crc = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + 38);
-                Logger.Debug("Calibration data parsed successfully");
 
-                // User-defined data: 36 bytes
-                offset = 80; //8-byte alignment
+                offset = 80;
                 User.Schema = BitConverter.ToUInt16(eeprom, offset);
                 User.ProbeSerialNumber = Encoding.ASCII.GetString(eeprom, offset + 2, 16).TrimEnd('\0');
                 User.ProbeExpiryDate = ByteHelper.ReadDateTime(eeprom, offset + 18);
                 User.Crc = BitConverter.ToUInt16(eeprom, offset + 26);
                 User.ProbeUsageDate = ByteHelper.ReadDateTime(eeprom, offset + 28);
-                Logger.Debug("User-defined data parsed successfully");
-
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Logger.Error($"Failed to parse data: {e.Message}");
+                Logger.Error($"Failed to parse EEPROM data: {ex.Message}");
                 throw;
             }
         }
 
-        private static void Dump(byte[] data, int bytesPerLine = 8)
+        private void ClearUiState()
         {
-            for (int i = 0; i < data.Length; i += bytesPerLine)
-            {
-                // Format address offset
-                var line = $"{i:X4}: ";
-                // Append up to bytesPerLine hex bytes
-                for (int j = 0; j < bytesPerLine && i + j < data.Length; j++)
-                {
-                    line += $"{data[i + j]:X2} ";
-                }
-                // Log the line at Info level (adjust level if needed)
-                Logger.Info(line);
-            }
+            _eeprom = new EepromData();
+            _rawEepromBytes = Array.Empty<byte>();
+            Identification = new IdentificationViewModel(_eeprom.Id);
+            Calibration = new CalibrationViewModel(_eeprom.Calibration);
+            User = new UserDataViewModel(_eeprom.User);
+            Progress = 0;
+            IsBusy = false;
+            OnPropertyChanged(nameof(Identification));
+            OnPropertyChanged(nameof(Calibration));
+            OnPropertyChanged(nameof(User));
         }
 
+        private void ClearRawDataView() => HexAsciiText = string.Empty;
+
+        private byte[] BuildEepromImage()
+        {
+            byte[] vendor = ByteHelper.Concatenate(_eeprom.Id.ToBytes(), _eeprom.Calibration.ToBytes());
+            return ByteHelper.ConcatenateWithPadding(vendor, _eeprom.User.ToBytes());
+        }
+
+        private static bool GetAppSettingBool(string key, bool defaultValue)
+        {
+            var raw = ConfigurationManager.AppSettings[key];
+            return bool.TryParse(raw, out var v) ? v : defaultValue;
+        }
+
+        private static byte GetAppSettingByte(string key, byte defaultValue)
+        {
+            var raw = ConfigurationManager.AppSettings[key];
+            if (string.IsNullOrWhiteSpace(raw)) return defaultValue;
+            raw = raw.Trim();
+            if (raw.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+                byte.TryParse(raw.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hex))
+                return hex;
+            return byte.TryParse(raw, out var v) ? v : defaultValue;
+        }
+
+        private static AdapterType GetAppSettingAdapterType(string key, AdapterType defaultValue)
+        {
+            var raw = ConfigurationManager.AppSettings[key];
+            return Enum.TryParse<AdapterType>(raw, ignoreCase: true, out var v) ? v : defaultValue;
+        }
 
         #endregion
     }

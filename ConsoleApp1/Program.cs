@@ -14,7 +14,7 @@ namespace ConsoleApp1
     {
         private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(ConsoleApp1));
 
-        private static DS2431Helper _helper;
+        private static DS9490Adapter _helper;
 
         static void Main(string[] args)
         {
@@ -33,7 +33,7 @@ namespace ConsoleApp1
                 return;
             }
 
-            _helper = new DS2431Helper("USB1");
+            _helper = new DS9490Adapter("USB1");
             //Start at standard speed
             _helper.Connect();
             _helper.OWReset();

@@ -10,9 +10,9 @@ using slf4net;
 
 namespace OneWireController
 {
-    public class DS2431Helper
+    public class DS9490Adapter : IOneWireAdapter
     {
-        private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(DS2431Helper));
+        private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(DS9490Adapter));
 
         private readonly PortAdapter _adapter;
 
@@ -28,7 +28,7 @@ namespace OneWireController
 
         public byte[] Rom { get; }
 
-        public DS2431Helper(string port)
+        public DS9490Adapter(string port)
         {
             try
             {

@@ -1,35 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
+using OneWire.Services;
 using OneWireEEPROMWpfApp.ViewModels;
 
 namespace OneWireEEPROMWpfApp
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application
     {
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            // Setup services
             IFileDialogService fileDialogService = new FileDialogService();
+            IEepromService eepromService = new EepromService();
+            IEepromFileService fileService = new EepromFileService();
 
-            // Create ViewModel
-            var mainViewModel = new MainViewModel(fileDialogService);
+            var mainViewModel = new MainViewModel(fileDialogService, eepromService, fileService);
 
-            // Create MainWindow and assign DataContext
-            var mainWindow = new MainWindow
-            {
-                DataContext = mainViewModel
-            };
-
+            var mainWindow = new MainWindow { DataContext = mainViewModel };
             mainWindow.Show();
         }
     }

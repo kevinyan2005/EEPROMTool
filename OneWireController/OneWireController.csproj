@@ -62,12 +62,21 @@
   <ItemGroup>
     <Compile Include="ByteArraryExtensions.cs" />
     <Compile Include="DeviceController.cs" />
-    <Compile Include="DS2431Helper.cs" />
+    <Compile Include="DS9490Adapter.cs" />
+    <Compile Include="IOneWireAdapter.cs" />
+    <Compile Include="MockAdapter.cs" />
+    <Compile Include="OneWireAdapterFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OneWire.Common\OneWire.Common.csproj">
+      <Project>{c5c358a7-8b40-4ae9-8351-5e5e27c34543}</Project>
+      <Name>OneWire.Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
