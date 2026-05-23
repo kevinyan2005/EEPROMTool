@@ -117,6 +117,13 @@ namespace OneWireEEPROMWpfApp.ViewModels
             set { if (_showOverdriveCheckbox == value) return; _showOverdriveCheckbox = value; OnPropertyChanged(); }
         }
 
+        private bool _showProbeUsageDate;
+        public bool ShowProbeUsageDate
+        {
+            get => _showProbeUsageDate;
+            set { if (_showProbeUsageDate == value) return; _showProbeUsageDate = value; OnPropertyChanged(); }
+        }
+
         private bool _useOverrideSpeed;
         public bool UseOverrideSpeed
         {
@@ -167,6 +174,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             AllowEditIdentification = GetAppSettingBool("AllowEditIdentification", defaultValue: true);
             AllowEditCalibration = GetAppSettingBool("AllowEditCalibration", defaultValue: true);
             ShowOverdriveCheckbox = GetAppSettingBool("ShowOverdriveCheckbox", defaultValue: false);
+            _showProbeUsageDate = GetAppSettingBool("ShowProbeUsageDate", defaultValue: true);
             _eraseFillByte = GetAppSettingByte("EraseFillByte", 0x00);
 
             _fileDialogService = fileDialogService;
@@ -401,11 +409,14 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 Calibration.Crc = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + 38);
 
                 offset = 80;
-                User.Schema = BitConverter.ToUInt16(eeprom, offset);
+                //User.Schema = BitConverter.ToUInt16(eeprom, offset);
+                User.Schema = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset);
                 User.ProbeSerialNumber = Encoding.ASCII.GetString(eeprom, offset + 2, 16).TrimEnd('\0');
-                User.ProbeExpiryDate = ByteHelper.ReadDateTime(eeprom, offset + 18);
+                //User.ProbeExpiryDate = ByteHelper.ReadDateTime(eeprom, offset + 18);
+                User.ProbeExpiryDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + 18);
                 User.Crc = BitConverter.ToUInt16(eeprom, offset + 26);
-                User.ProbeUsageDate = ByteHelper.ReadDateTime(eeprom, offset + 28);
+                //User.ProbeUsageDate = ByteHelper.ReadDateTime(eeprom, offset + 28);
+                User.ProbeUsageDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + 28);
             }
             catch (Exception ex)
             {

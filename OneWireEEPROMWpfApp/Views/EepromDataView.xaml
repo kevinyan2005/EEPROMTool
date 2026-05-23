@@ -157,13 +157,13 @@
                             <!--<TextBox Grid.Row="2" Grid.Column="2" 
                   Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
                             <TextBox Grid.Row="2" Grid.Column="2"
-                                     Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}"
+                                     Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy/MM/dd HH:mm:ss}, TargetNullValue=''}"
                                      IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Expiry Date:" />
                             <!--<TextBox Grid.Row="4" Grid.Column="2" 
                   Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
                             <TextBox Grid.Row="4" Grid.Column="2"
-                                     Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}"
+                                     Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy/MM/dd HH:mm:ss}, TargetNullValue=''}"
                                      IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
                             <TextBlock Grid.Row="6" Grid.Column="0" Text="Gauge Type:" />
                             <TextBox Grid.Row="6" Grid.Column="2"
@@ -214,7 +214,7 @@
                                 <RowDefinition Height="5"></RowDefinition>
                                 <RowDefinition></RowDefinition>
                                 <RowDefinition Height="5"></RowDefinition>
-                                <RowDefinition Height="23.7"></RowDefinition>
+                                <RowDefinition Height="Auto"></RowDefinition>
                                 <RowDefinition Height="5"></RowDefinition>
                                 <RowDefinition></RowDefinition>
                                 <RowDefinition Height="5"></RowDefinition>
@@ -225,7 +225,8 @@
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Schema Ver:"></TextBlock>
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Expiry Date:"></TextBlock>
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Probe Usage:"></TextBlock>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Probe Usage:"
+                                       Visibility="{Binding ShowProbeUsageDate, Converter={StaticResource BooleanToVisibilityConverter}}"></TextBlock>
                             <TextBlock Grid.Row="6" Grid.Column="0" Text="Probe Type:"></TextBlock>
                             <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:"></TextBlock>
                             <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding User.Schema}"></TextBox>
@@ -235,7 +236,8 @@
                                         SelectedDate="{Binding User.ProbeExpiryDate, Mode=TwoWay, TargetNullValue={x:Null}}" />
                             <TextBox Grid.Row="4" Grid.Column="2"
                                      Text="{Binding User.ProbeUsageDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}"
-                                     IsReadOnly="True" />
+                                     IsReadOnly="True"
+                                     Visibility="{Binding ShowProbeUsageDate, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
                             <ComboBox Grid.Row="6" Grid.Column="2" Width="100" HorizontalAlignment="Left"
                                       ItemsSource="{Binding User.AvailableProbes}"

@@ -63,12 +63,24 @@ namespace OneWire.Services
             {
                 case WriteMode.Entire:
                 {
+                    const int eepromSize = 128;
                     byte[] vendor = ByteHelper.Concatenate(data.Id.ToBytes(), data.Calibration.ToBytes());
                     byte[] full = ByteHelper.ConcatenateWithPadding(vendor, data.User.ToBytes());
-                    return (0, full);
+                    byte[] image = new byte[eepromSize];
+                    for (int i = 0; i < image.Length; i++) image[i] = 0xFF;
+                    Array.Copy(full, image, Math.Min(full.Length, eepromSize));
+                    return (0, image);
                 }
                 case WriteMode.UserDataOnly:
-                    return (80, data.User.ToBytes());
+                {
+                    const ushort userAreaStart = 80;
+                    const int userAreaSize = 128 - userAreaStart;
+                    byte[] userData = data.User.ToBytes();
+                    byte[] area = new byte[userAreaSize];
+                    for (int i = 0; i < area.Length; i++) area[i] = 0xFF;
+                    Array.Copy(userData, area, Math.Min(userData.Length, userAreaSize));
+                    return (userAreaStart, area);
+                }
                 case WriteMode.Erase:
                 {
                     byte[] eraseImage = new byte[128];

@@ -36,6 +36,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             else
             {
                 _referenceValue = null;
+                _data.ReferenceValue = uint.MaxValue; // 0xFFFFFFFF = not set
                 _manufactureDate = null;
                 _expiryDate = null;
                 _crc = null;
@@ -66,13 +67,14 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 }
                 else
                 {
+                    _data.ReferenceValue = uint.MaxValue; // 0xFFFFFFFF = not set
                     _crc = null;
                     OnPropertyChanged(nameof(Crc));
                 }
                 OnPropertyChanged();
             }
         }
-        
+
         public string GaugeType
         {
             get => _data.GaugeType;

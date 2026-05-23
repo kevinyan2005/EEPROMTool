@@ -52,6 +52,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             {
                 // Fields stay null, serial number remains empty string in model
                 _probeUsageDate = null;
+                _model.ProbeUsageDate = DateTime.MaxValue;
                 _probeExpiryDate = null;
                 _crc = null;
             }
@@ -136,11 +137,12 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 _probeUsageDate = value;
                 if (value.HasValue)
                 {
-                    _model.ProbeExpiryDate = value.Value;
+                    _model.ProbeUsageDate = value.Value;
                     //UpdateCrc();
                 }
                 else
                 {
+                    _model.ProbeUsageDate = DateTime.MaxValue;
                     _crc = null;
                     OnPropertyChanged(nameof(Crc));
                 }

@@ -22,7 +22,8 @@ namespace OneWire.Common
             int offset = 0;
 
             // Schema
-            byte[] schemaBytes = BitConverter.GetBytes(Schema);
+            //byte[] schemaBytes = BitConverter.GetBytes(Schema);
+            byte[] schemaBytes = ByteHelper.ConvertUInt16ToBytesBigEndian(Schema);
             Array.Copy(schemaBytes, 0, data, offset, Math.Min(2, schemaBytes.Length));
             offset += 2;
 
@@ -32,7 +33,9 @@ namespace OneWire.Common
             offset += 16;
 
             // ProbeExpiryDate
-            Array.Copy(BitConverter.GetBytes(ProbeExpiryDate.ToBinary()), 0, data, offset, 8);
+            //Array.Copy(BitConverter.GetBytes(ProbeExpiryDate.ToBinary()), 0, data, offset, 8);
+            var pedBytes = ByteHelper.ConvertDateTimeToVendorBytes(ProbeExpiryDate);
+            Array.Copy(pedBytes, 0, data, offset, 8);
             offset += 8;
 
             // CRC16
@@ -47,7 +50,8 @@ namespace OneWire.Common
             Array.Copy(crc16Bytes, 0, withCrc, data.Length, 2);
 
             // ProbeUsageDate
-            byte[] pudBytes = BitConverter.GetBytes(ProbeUsageDate.ToBinary());
+            //byte[] pudBytes = BitConverter.GetBytes(ProbeUsageDate.ToBinary());
+            byte[] pudBytes = ByteHelper.ConvertDateTimeToVendorBytes(ProbeUsageDate);
             Array.Copy(pudBytes, 0, withCrc, 28, Math.Min(8, pudBytes.Length));
 
             return withCrc;
