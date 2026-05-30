@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using OneWireEEPROMWpfApp.Annotations;
+using OneWire.UI.Wpf.Annotations;
 
-namespace OneWireEEPROMWpfApp.ViewModels
+namespace OneWire.UI.Wpf.ViewModels
 {
     public class ViewModelBase : INotifyPropertyChanged
     {

@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Windows.Data;
 
-namespace OneWireEEPROMWpfApp.Converters
+namespace OneWire.UI.Wpf.Converters
 {
     public class EnumDescriptionConverter : IValueConverter
     {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
@@ -6,7 +6,7 @@ using System.Linq;
 using OneWire.Core;
 using slf4net;
 
-namespace OneWireEEPROMWpfApp.ViewModels
+namespace OneWire.UI.Wpf.ViewModels
 {
     public class UserDataViewModel : ViewModelBase, IDataErrorInfo
     {

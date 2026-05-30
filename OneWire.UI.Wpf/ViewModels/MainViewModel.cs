@@ -8,10 +8,10 @@ using System.Windows.Input;
 using OneWire.Adapters;
 using OneWire.Common;
 using OneWire.Core;
-using OneWireEEPROMWpfApp.Views;
+using OneWire.UI.Wpf.Views;
 using slf4net;
 
-namespace OneWireEEPROMWpfApp.ViewModels
+namespace OneWire.UI.Wpf.ViewModels
 {
     public class MainViewModel : ViewModelBase
     {

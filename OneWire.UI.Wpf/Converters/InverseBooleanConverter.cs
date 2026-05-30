@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 
-namespace OneWireEEPROMWpfApp.Converters
+namespace OneWire.UI.Wpf.Converters
 {
     public class InverseBooleanConverter : IValueConverter
     {

@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace OneWireEEPROMWpfApp.Views
+namespace OneWire.UI.Wpf.Views
 {
     public partial class ConfirmWriteDialog : Window
     {

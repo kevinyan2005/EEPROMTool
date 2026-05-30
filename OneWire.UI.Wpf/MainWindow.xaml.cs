@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -16,17 +16,17 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using OneWireEEPROMWpfApp.ViewModels;
+using OneWire.UI.Wpf.ViewModels;
 using slf4net;
 
-namespace OneWireEEPROMWpfApp
+namespace OneWire.UI.Wpf
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(OneWireEEPROMWpfApp));
+        private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(OneWire.UI.Wpf));
 
         private static string AppVersion
         {

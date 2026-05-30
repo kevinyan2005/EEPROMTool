@@ -1,6 +1,6 @@
-﻿using OneWire.Core;
+using OneWire.Core;
 
-namespace OneWireEEPROMWpfApp.ViewModels
+namespace OneWire.UI.Wpf.ViewModels
 {
     public class IdentificationViewModel : ViewModelBase
     {

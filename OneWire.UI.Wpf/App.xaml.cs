@@ -1,8 +1,8 @@
 using System.Windows;
 using OneWire.Core;
-using OneWireEEPROMWpfApp.ViewModels;
+using OneWire.UI.Wpf.ViewModels;
 
-namespace OneWireEEPROMWpfApp
+namespace OneWire.UI.Wpf
 {
     public partial class App : Application
     {

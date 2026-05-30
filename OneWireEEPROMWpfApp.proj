@@ -7,7 +7,7 @@
     <PartVersion>1.0.0.0</PartVersion>
     <PartGUID>04E353BD-1448-461E-87C1-D6CB74EB6DDA</PartGUID>
     <PartDescription>A tool used to test the 1-wire EEPROM</PartDescription>
-    <PartExe>OneWireEEPROMWpfApp.exe</PartExe>
+    <PartExe>OneWire.UI.Wpf.exe</PartExe>
   </PropertyGroup>
  
   <PropertyGroup>    
@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <SolutionFiles Include="$(SourceDir)\OneWireEEPROMWpfApp.sln"/>
-    <AssemblyInfoFiles Include="$(SourceDir)\OneWireEEPROMWpfApp\Properties\AssemblyInfo.cs"/>
+    <AssemblyInfoFiles Include="$(SourceDir)\OneWire.UI.Wpf\Properties\AssemblyInfo.cs"/>
     <NugetFiles Include="install\package.nuspec"/>
     <SubstituteInstallerInfoFiles Include="$(MSBuildProjectDirectory)\install\*.in" />
   </ItemGroup>
