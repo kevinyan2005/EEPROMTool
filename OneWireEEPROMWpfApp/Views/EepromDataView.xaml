@@ -150,18 +150,15 @@
 
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Ref. Value:" />
                             <TextBox Grid.Row="0" Grid.Column="2"
-                                     Text="{Binding Calibration.ReferenceValue, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
-                                     IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
+                                     Text="{Binding Calibration.ReferenceValue, StringFormat={}{0:X8}, Mode=OneWay}"
+                                     IsReadOnly="True"
+                                     IsEnabled="False" />
 
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Mfg. Date:" />
-                            <!--<TextBox Grid.Row="2" Grid.Column="2" 
-                  Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
                             <TextBox Grid.Row="2" Grid.Column="2"
                                      Text="{Binding Calibration.ManufactureDate, StringFormat={}{0:yyyy/MM/dd HH:mm:ss}, TargetNullValue=''}"
                                      IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Expiry Date:" />
-                            <!--<TextBox Grid.Row="4" Grid.Column="2" 
-                  Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" IsReadOnly="True" />-->
                             <TextBox Grid.Row="4" Grid.Column="2"
                                      Text="{Binding Calibration.ExpiryDate, StringFormat={}{0:yyyy/MM/dd HH:mm:ss}, TargetNullValue=''}"
                                      IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />

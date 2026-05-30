@@ -8,7 +8,7 @@ namespace OneWire.Common
         public const int LengthWithoutCrc = EepromLayout.CalBlockLength;
 
         public uint[] GaugeFactors { get; set; } = new uint[EepromLayout.CalGaugeFactorCount];
-        public uint ReferenceValue { get; set; }       // 4 bytes
+        public uint ReferenceValue { get; set; } = uint.MaxValue; // 4 bytes — fixed at 0xFFFFFFFF, not user-editable
         public DateTime ManufactureDate { get; set; }  // 8 bytes
         public DateTime ExpiryDate { get; set; }       // 8 bytes
         public string GaugeType { get; set; }          // 2 bytes

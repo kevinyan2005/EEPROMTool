@@ -14,7 +14,6 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
         public ObservableCollection<GaugeFactorViewModel> GaugeFactors { get; }
 
-        private uint? _referenceValue;
         private DateTime? _manufactureDate;
         private DateTime? _expiryDate;
         private ushort? _crc;
@@ -26,17 +25,16 @@ namespace OneWireEEPROMWpfApp.ViewModels
         {
             _data = data;
 
+            _data.ReferenceValue = uint.MaxValue;
+
             if (loadFromData)
             {
-                _referenceValue  = data.ReferenceValue == uint.MaxValue ? (uint?)null : data.ReferenceValue;
-                _manufactureDate = data.ManufactureDate == default      ? (DateTime?)null : data.ManufactureDate;
-                _expiryDate      = data.ExpiryDate      == default      ? (DateTime?)null : data.ExpiryDate;
+                _manufactureDate = data.ManufactureDate == default ? (DateTime?)null : data.ManufactureDate;
+                _expiryDate      = data.ExpiryDate      == default ? (DateTime?)null : data.ExpiryDate;
                 _crc = data.Crc16;
             }
             else
             {
-                _referenceValue = null;
-                _data.ReferenceValue = uint.MaxValue; // 0xFFFFFFFF = not set
                 _manufactureDate = null;
                 _expiryDate = null;
                 _crc = null;
@@ -53,27 +51,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         /// Force recalc and notify UI that CRC changed.
         /// </summary>
 
-        public uint? ReferenceValue
-        {
-            get => _referenceValue;
-            set
-            {
-                if (_referenceValue == value) return;
-                _referenceValue = value;
-                if (value.HasValue)
-                {
-                    _data.ReferenceValue = value.Value;
-                    UpdateCrc();
-                }
-                else
-                {
-                    _data.ReferenceValue = uint.MaxValue; // 0xFFFFFFFF = not set
-                    _crc = null;
-                    OnPropertyChanged(nameof(Crc));
-                }
-                OnPropertyChanged();
-            }
-        }
+        public uint ReferenceValue => _data.ReferenceValue;
 
         public string GaugeType
         {
@@ -145,7 +123,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
       
         protected void UpdateCrc()
         {
-            if (!_referenceValue.HasValue || !_manufactureDate.HasValue || !_expiryDate.HasValue ||
+            if (!_manufactureDate.HasValue || !_expiryDate.HasValue ||
                 GaugeFactors.Any(gf => !gf.Value.HasValue))
             {
                 _crc = null;
