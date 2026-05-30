@@ -43,18 +43,11 @@
   <ItemGroup>
     <Compile Include="AdapterType.cs" />
     <Compile Include="ByteArrayHelper.cs" />
+    <Compile Include="CrcHelper.cs" />
     <Compile Include="DateTimeHelper.cs" />
     <Compile Include="EndianHelper.cs" />
     <Compile Include="HexFormatter.cs" />
-    <Compile Include="EepromLayout.cs" />
-    <Compile Include="EepromData.cs" />
-    <Compile Include="CrcHelper.cs" />
-    <Compile Include="IBlockWithCrc.cs" />
-    <Compile Include="OneWireIdentificationBlock.cs" />
-    <Compile Include="ProbeTypeEnum.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SensorCalibrationBlock.cs" />
-    <Compile Include="UserDefinedBlock.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

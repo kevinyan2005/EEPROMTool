@@ -1,7 +1,8 @@
 using System;
 using System.Text;
+using OneWire.Common;
 
-namespace OneWire.Common
+namespace OneWire.Core
 {
     public class UserDefinedBlock : IBlockWithCrc
     {

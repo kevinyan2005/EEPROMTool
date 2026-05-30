@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneWire.Common", "OneWire.C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneWire.Tests", "OneWire.Tests\OneWire.Tests.csproj", "{7F367D9E-D0DE-44F0-BC98-7584E70BD944}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneWire.Services", "OneWire.Services\OneWire.Services.csproj", "{3A7B9C2D-E1F4-4A5B-8C6D-7E8F9A0B1C2D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneWire.Core", "OneWire.Core\OneWire.Core.csproj", "{3A7B9C2D-E1F4-4A5B-8C6D-7E8F9A0B1C2D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

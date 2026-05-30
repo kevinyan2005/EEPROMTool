@@ -1,4 +1,4 @@
-namespace OneWire.Common
+namespace OneWire.Core
 {
     public class EepromData
     {

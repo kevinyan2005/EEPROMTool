@@ -1,74 +1,75 @@
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using OneWire.Common;
 using OneWire.Adapters;
 using slf4net;
 
-namespace OneWire.Services
+namespace OneWire.Core
 {
-    public class EepromService : IEepromService
+    public class EepromDataManager : IEepromDataManager
     {
-        private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(EepromService));
+        private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(EepromDataManager));
 
-        private readonly IEepromSerializer _eepromSerializer;
+        private readonly EepromSerializer _serializer = new EepromSerializer();
+        private readonly EepromFileService _fileService = new EepromFileService();
+
         private IOneWireAdapter _adapter;
-
-        public EepromService(IEepromSerializer eepromSerializer)
-        {
-            _eepromSerializer = eepromSerializer;
-        }
+        private bool _useOverdrive;
 
         public bool IsConnected => _adapter != null;
 
-        public void Connect(AdapterType adapterType, string port)
+        public void Open(IOneWireAdapter adapter)
         {
-            _adapter = OneWireAdapterFactory.Create(adapterType, port);
+            _adapter = adapter ?? throw new ArgumentNullException(nameof(adapter));
             _adapter.Connect();
             _adapter.OWReset();
-            Logger.Info($"Connected via {adapterType} on {port}");
+            Logger.Info("Adapter opened.");
         }
 
-        public void Disconnect()
+        public void Close()
         {
             if (_adapter == null) return;
             _adapter.Reset();
             _adapter.Disconnect();
             _adapter = null;
-            Logger.Info("Disconnected from adapter");
+            Logger.Info("Adapter closed.");
         }
 
         public void SetSpeed(bool useOverdrive)
         {
+            _useOverdrive = useOverdrive;
             if (_adapter == null) return;
             if (useOverdrive) _adapter.EnterOverdrive();
             else _adapter.EnterStandard();
         }
 
-        public Task<byte[]> ReadAsync(IProgress<int> progress = null)
+        public Task<byte[]> ReadRawAsync(IProgress<int> progress = null)
         {
             EnsureConnected();
-            return MeasureAsync(
-                () => _adapter.ReadEntireMemoryAsync(overdrive: false, progress),
-                "Read Entire EEPROM");
+            return MeasureAsync(() => _adapter.ReadEntireMemoryAsync(_useOverdrive, progress), "Read EEPROM");
         }
 
         public async Task<byte[]> WriteAsync(EepromData data, WriteMode mode, byte eraseFillByte = 0x00, IProgress<int> progress = null)
         {
             EnsureConnected();
             var (address, imageBytes) = BuildImage(data, mode, eraseFillByte);
-            await MeasureAsync(
-                () => _adapter.WriteMemoryAsync(address, imageBytes, overdrive: false, progress),
-                $"Write EEPROM ({mode})");
-            return await _adapter.ReadEntireMemoryAsync(overdrive: false);
+            await MeasureAsync(() => _adapter.WriteMemoryAsync(address, imageBytes, _useOverdrive, progress), $"Write EEPROM ({mode})");
+            return await _adapter.ReadEntireMemoryAsync(_useOverdrive);
         }
+
+        public EepromData Decode(byte[] rawBytes) => _serializer.Decode(rawBytes);
+        public byte[] Encode(EepromData data) => _serializer.Encode(data);
+        public EepromData LoadFromJson(string path) => _fileService.LoadFromJson(path);
+        public void SaveToJson(EepromData data, string path) => _fileService.SaveToJson(data, path);
+        public byte[] LoadRawHex(string path) => _fileService.LoadFromRawTxt(path);
+        public void SaveRawHex(byte[] rawBytes, string path) => _fileService.SaveToRawTxt(rawBytes, path);
 
         private (ushort address, byte[] data) BuildImage(EepromData data, WriteMode mode, byte eraseFillByte)
         {
             switch (mode)
             {
                 case WriteMode.Entire:
-                    return (0, _eepromSerializer.Encode(data));
+                    return (0, _serializer.Encode(data));
 
                 case WriteMode.UserDataOnly:
                 {

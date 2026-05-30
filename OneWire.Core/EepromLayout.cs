@@ -1,4 +1,4 @@
-namespace OneWire.Common
+namespace OneWire.Core
 {
     /// <summary>
     /// Single source of truth for the 128-byte DS2431 EEPROM memory map.

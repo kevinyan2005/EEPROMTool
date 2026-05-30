@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace OneWire.Services
+namespace OneWire.Core
 {
     public enum WriteMode
     {

@@ -4,9 +4,9 @@ using System.IO;
 using System.Text;
 using OneWire.Common;
 
-namespace OneWire.Services
+namespace OneWire.Core
 {
-    public class EepromSerializer : IEepromSerializer
+    internal class EepromSerializer
     {
         public EepromData Decode(byte[] raw)
         {

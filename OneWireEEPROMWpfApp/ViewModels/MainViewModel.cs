@@ -5,8 +5,9 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using OneWire.Adapters;
 using OneWire.Common;
-using OneWire.Services;
+using OneWire.Core;
 using OneWireEEPROMWpfApp.Views;
 using slf4net;
 
@@ -17,9 +18,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(MainViewModel));
 
         private readonly IFileDialogService _fileDialogService;
-        private readonly IEepromService _eepromService;
-        private readonly IEepromFileService _fileService;
-        private readonly IEepromSerializer _eepromSerializer;
+        private readonly IEepromDataManager _manager;
 
         public IdentificationViewModel Identification { get; private set; }
         public CalibrationViewModel Calibration { get; private set; }
@@ -130,8 +129,8 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 if (_useOverrideSpeed == value) return;
                 _useOverrideSpeed = value;
                 OnPropertyChanged();
-                if (_eepromService.IsConnected)
-                    _eepromService.SetSpeed(_useOverrideSpeed);
+                if (_manager.IsConnected)
+                    _manager.SetSpeed(_useOverrideSpeed);
             }
         }
 
@@ -164,7 +163,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             }
         }
 
-        public MainViewModel(IFileDialogService fileDialogService, IEepromService eepromService, IEepromFileService fileService, IEepromSerializer eepromSerializer)
+        public MainViewModel(IFileDialogService fileDialogService, IEepromDataManager manager)
         {
             SelectedPort = ConfigurationManager.AppSettings["DefaultPort"] ?? "USB1";
             _selectedAdapterType = GetAppSettingAdapterType("AdapterType", AdapterType.DS9490);
@@ -175,9 +174,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             _eraseFillByte = GetAppSettingByte("EraseFillByte", 0x00);
 
             _fileDialogService = fileDialogService;
-            _eepromService = eepromService;
-            _fileService = fileService;
-            _eepromSerializer = eepromSerializer;
+            _manager = manager;
 
             _eeprom = new EepromData();
             Identification = new IdentificationViewModel(_eeprom.Id);
@@ -204,7 +201,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
         public void OnAppClosing()
         {
-            _eepromService.Disconnect();
+            _manager.Close();
         }
 
         #region Commands
@@ -213,7 +210,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         {
             if (IsPortOpen)
             {
-                _eepromService.Disconnect();
+                _manager.Close();
                 IsPortOpen = false;
                 ClearUiState();
                 ClearRawDataView();
@@ -222,7 +219,8 @@ namespace OneWireEEPROMWpfApp.ViewModels
             {
                 try
                 {
-                    _eepromService.Connect(SelectedAdapterType, SelectedPort);
+                    var adapter = OneWireAdapterFactory.Create(SelectedAdapterType, SelectedPort);
+                    _manager.Open(adapter);
                     IsPortOpen = true;
                 }
                 catch (Exception ex)
@@ -289,7 +287,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         private async Task ExecuteWriteAsync(WriteMode mode)
         {
             var progress = new Progress<int>(p => Progress = p);
-            var bytes = await _eepromService.WriteAsync(_eeprom, mode, _eraseFillByte, progress);
+            var bytes = await _manager.WriteAsync(_eeprom, mode, _eraseFillByte, progress);
             Progress = 0;
             _rawEepromBytes = (byte[])bytes.Clone();
             HexAsciiText = HexFormatter.FormatHexAscii(bytes);
@@ -305,8 +303,8 @@ namespace OneWireEEPROMWpfApp.ViewModels
             var path = _fileDialogService.OpenFile("JSON files|*.json");
             if (path == null) return;
 
-            _eeprom = _fileService.LoadFromJson(path);
-            _rawEepromBytes = BuildEepromImage();
+            _eeprom = _manager.LoadFromJson(path);
+            _rawEepromBytes = _manager.Encode(_eeprom);
 
             Identification = new IdentificationViewModel(_eeprom.Id, loadFromData: true);
             Calibration = new CalibrationViewModel(_eeprom.Calibration, loadFromData: true);
@@ -321,7 +319,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         {
             var path = _fileDialogService.SaveFile("JSON files|*.json");
             if (path == null) return;
-            _fileService.SaveToJson(_eeprom, path);
+            _manager.SaveToJson(_eeprom, path);
         }
 
         private void LoadRawTxt()
@@ -331,7 +329,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
             try
             {
-                var bytes = _fileService.LoadFromRawTxt(path);
+                var bytes = _manager.LoadRawHex(path);
                 _rawEepromBytes = (byte[])bytes.Clone();
                 HexAsciiText = HexFormatter.FormatHexAscii(bytes);
                 ParseEeprom(bytes);
@@ -353,8 +351,8 @@ namespace OneWireEEPROMWpfApp.ViewModels
             if (path == null) return;
             var data = _rawEepromBytes != null && _rawEepromBytes.Length > 0
                 ? _rawEepromBytes
-                : BuildEepromImage();
-            _fileService.SaveToRawTxt(data, path);
+                : _manager.Encode(_eeprom);
+            _manager.SaveRawHex(data, path);
         }
 
         private void ExportHex()
@@ -370,21 +368,21 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
         private bool CanStartOperation() => IsPortOpen && !IsBusy;
 
-        private async Task ReadEepromInternalAsync(bool parse = true)
+        private async Task ReadEepromInternalAsync()
         {
             var progress = new Progress<int>(p => Progress = p);
-            var bytes = await _eepromService.ReadAsync(progress);
+            var bytes = await _manager.ReadRawAsync(progress);
             Progress = 0;
             _rawEepromBytes = (byte[])bytes.Clone();
             HexAsciiText = HexFormatter.FormatHexAscii(bytes);
-            if (parse) ParseEeprom(bytes);
+            ParseEeprom(bytes);
         }
 
         private void ParseEeprom(byte[] raw)
         {
             try
             {
-                _eeprom = _eepromSerializer.Decode(raw);
+                _eeprom = _manager.Decode(raw);
 
                 Identification = new IdentificationViewModel(_eeprom.Id, loadFromData: true);
                 Calibration    = new CalibrationViewModel(_eeprom.Calibration, loadFromData: true);
@@ -425,8 +423,6 @@ namespace OneWireEEPROMWpfApp.ViewModels
         }
 
         private void ClearRawDataView() => HexAsciiText = string.Empty;
-
-        private byte[] BuildEepromImage() => _eepromSerializer.Encode(_eeprom);
 
         private static bool GetAppSettingBool(string key, bool defaultValue)
         {

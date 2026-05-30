@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Linq;
-using OneWire.Common;
+using OneWire.Core;
 using slf4net;
 
 namespace OneWireEEPROMWpfApp.ViewModels

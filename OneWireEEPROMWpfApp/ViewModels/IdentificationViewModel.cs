@@ -1,4 +1,4 @@
-﻿using OneWire.Common;
+﻿using OneWire.Core;
 
 namespace OneWireEEPROMWpfApp.ViewModels
 {

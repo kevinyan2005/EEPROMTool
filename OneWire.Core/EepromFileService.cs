@@ -5,9 +5,9 @@ using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using OneWire.Common;
 
-namespace OneWire.Services
+namespace OneWire.Core
 {
-    public class EepromFileService : IEepromFileService
+    internal class EepromFileService
     {
         public EepromData LoadFromJson(string path)
         {
