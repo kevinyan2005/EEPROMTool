@@ -61,7 +61,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ByteArraryExtensions.cs" />
-    <Compile Include="DeviceController.cs" />
     <Compile Include="DS9490Adapter.cs" />
     <Compile Include="IOneWireAdapter.cs" />
     <Compile Include="MockAdapter.cs" />

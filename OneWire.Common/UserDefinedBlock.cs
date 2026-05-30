@@ -18,7 +18,7 @@ namespace OneWire.Common
             byte[] data = new byte[EepromLayout.UserBlockLength];
             int offset = 0;
 
-            byte[] schemaBytes = ByteHelper.ConvertUInt16ToBytesBigEndian(Schema);
+            byte[] schemaBytes = EndianHelper.ConvertUInt16ToBytesBigEndian(Schema);
             Array.Copy(schemaBytes, 0, data, offset, Math.Min(EepromLayout.UserSchemaSize, schemaBytes.Length));
             offset += EepromLayout.UserSchemaSize;
 
@@ -26,7 +26,7 @@ namespace OneWire.Common
             Array.Copy(probeSerialBytes, 0, data, offset, Math.Min(EepromLayout.UserProbeSerialSize, probeSerialBytes.Length));
             offset += EepromLayout.UserProbeSerialSize;
 
-            var pedBytes = ByteHelper.ConvertDateTimeToVendorBytes(ProbeExpiryDate);
+            var pedBytes = DateTimeHelper.ConvertDateTimeToVendorBytes(ProbeExpiryDate);
             Array.Copy(pedBytes, 0, data, offset, EepromLayout.UserProbeExpirySize);
 
             Crc16 = CrcHelper.ComputeCrc16(data, data.Length);
@@ -43,7 +43,7 @@ namespace OneWire.Common
             for (int i = data.Length + EepromLayout.CrcSize; i < EepromLayout.UserProbeUsageDateOffset; i++)
                 withCrc[i] = 0xFF;
 
-            byte[] pudBytes = ByteHelper.ConvertDateTimeToVendorBytes(ProbeUsageDate);
+            byte[] pudBytes = DateTimeHelper.ConvertDateTimeToVendorBytes(ProbeUsageDate);
             Array.Copy(pudBytes, 0, withCrc, EepromLayout.UserProbeUsageDateOffset, Math.Min(EepromLayout.UserProbeUsageDateSize, pudBytes.Length));
 
             return withCrc;

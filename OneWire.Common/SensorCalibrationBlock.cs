@@ -21,20 +21,20 @@ namespace OneWire.Common
 
             for (int i = 0; i < EepromLayout.CalGaugeFactorCount; i++)
             {
-                var gfBytes = ByteHelper.ConvertUInt32ToBytesWithWordSwap(GaugeFactors[i]);
+                var gfBytes = EndianHelper.ConvertUInt32ToBytesWithWordSwap(GaugeFactors[i]);
                 Array.Copy(gfBytes, 0, data, offset, EepromLayout.CalGaugeFactorSize);
                 offset += EepromLayout.CalGaugeFactorSize;
             }
 
-            var refBytes = ByteHelper.ConvertUInt32ToBytesWithWordSwap(ReferenceValue);
+            var refBytes = EndianHelper.ConvertUInt32ToBytesWithWordSwap(ReferenceValue);
             Array.Copy(refBytes, 0, data, offset, EepromLayout.CalReferenceValueSize);
             offset += EepromLayout.CalReferenceValueSize;
 
-            byte[] mfgDateBytes = ByteHelper.ConvertDateTimeToVendorBytes(ManufactureDate);
+            byte[] mfgDateBytes = DateTimeHelper.ConvertDateTimeToVendorBytes(ManufactureDate);
             Array.Copy(mfgDateBytes, 0, data, offset, EepromLayout.CalManufactureDateSize);
             offset += EepromLayout.CalManufactureDateSize;
 
-            byte[] edBytes = ByteHelper.ConvertDateTimeToVendorBytes(ExpiryDate);
+            byte[] edBytes = DateTimeHelper.ConvertDateTimeToVendorBytes(ExpiryDate);
             Array.Copy(edBytes, 0, data, offset, EepromLayout.CalExpiryDateSize);
             offset += EepromLayout.CalExpiryDateSize;
 

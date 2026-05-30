@@ -19,7 +19,7 @@ namespace OneWire.Tests
             uint expected = 124889;
 
             // Act
-            uint actual = ByteHelper.ReadUInt32FromBytesWithWordSwap(input, 0);
+            uint actual = EndianHelper.ReadUInt32FromBytesWithWordSwap(input, 0);
 
             // Assert
             Assert.AreEqual(expected, actual, "The 32-bit conversion failed for the vendor example.");
@@ -33,7 +33,7 @@ namespace OneWire.Tests
             uint expected = 124889;
 
             // Act
-            uint actual = ByteHelper.ReadUInt32FromBytesWithShuffle(input);
+            uint actual = EndianHelper.ReadUInt32FromBytesWithShuffle(input);
 
             // Assert
             Assert.AreEqual(expected, actual, "The 32-bit conversion failed for the vendor example.");
@@ -47,7 +47,7 @@ namespace OneWire.Tests
             byte[] expected = { 0xE7, 0xD9, 0x00, 0x01 };
 
             // Act
-            byte[] actual = ByteHelper.ConvertUInt32ToBytesWithWordSwap(input);
+            byte[] actual = EndianHelper.ConvertUInt32ToBytesWithWordSwap(input);
 
             // Assert
             Assert.AreEqual(expected, actual, "The write conversion did not produce the correct byte sequence.");
@@ -61,7 +61,7 @@ namespace OneWire.Tests
         public void Verify_ConvertUInt32ToBytesWithWordSwap(uint input, byte[] expected)
         {
             // Act
-            byte[] actual = ByteHelper.ConvertUInt32ToBytesWithWordSwap(input);
+            byte[] actual = EndianHelper.ConvertUInt32ToBytesWithWordSwap(input);
 
             // Assert
             // Using NUnit's Is.EqualTo for proper array content comparison
@@ -75,7 +75,7 @@ namespace OneWire.Tests
             // 20 24 11 20 01 05 03 00 => 2024-11-20 01:05:03
             byte[] data = { 0x20, 0x24, 0x11, 0x20, 0x01, 0x05, 0x03, 0x00 };
 
-            DateTime? dt = ByteHelper.ReadVendorDateTimeOrNull(data, 0, DateTimeKind.Utc);
+            DateTime? dt = DateTimeHelper.ReadVendorDateTimeOrNull(data, 0, DateTimeKind.Utc);
 
             Assert.That(dt.HasValue, Is.True);
             Assert.That(dt.Value, Is.EqualTo(new DateTime(2024, 11, 20, 1, 5, 3, DateTimeKind.Utc)));
@@ -89,7 +89,7 @@ namespace OneWire.Tests
             TestName = "All_FF_ReturnsNull")]
         public void ReadVendorDateTime8OrNull_InvalidInputs_ReturnNull(byte[] data)
         {
-            DateTime? result = ByteHelper.ReadVendorDateTimeOrNull(
+            DateTime? result = DateTimeHelper.ReadVendorDateTimeOrNull(
                 data,
                 offset: 0,
                 kind: DateTimeKind.Utc);
@@ -101,7 +101,7 @@ namespace OneWire.Tests
         public void Verify_Null_DateTime_Pattern()
         {
             // Act
-            byte[] encoded = ByteHelper.ConvertDateTimeToVendorBytes(null);
+            byte[] encoded = DateTimeHelper.ConvertDateTimeToVendorBytes(null);
 
             // Assert
             Assert.AreEqual(0xD0, encoded[1], "Unset date should use 0xD0 padding.");
@@ -112,7 +112,7 @@ namespace OneWire.Tests
         public void Verify_ConvertDateTimeToVendorBytes(DateTime? input, byte[] expected)
         {
             // Act
-            byte[] actual = ByteHelper.ConvertDateTimeToVendorBytes(input);
+            byte[] actual = DateTimeHelper.ConvertDateTimeToVendorBytes(input);
 
             // Assert
             Assert.That(actual, Is.EqualTo(expected),
@@ -127,8 +127,8 @@ namespace OneWire.Tests
             DateTime original = new DateTime(2024, 10, 15, 14, 30, 05, DateTimeKind.Utc);
 
             // Act
-            byte[] encoded = ByteHelper.ConvertDateTimeToVendorBytes(original);
-            DateTime? decoded = ByteHelper.ReadVendorDateTimeOrNull(encoded, 0);
+            byte[] encoded = DateTimeHelper.ConvertDateTimeToVendorBytes(original);
+            DateTime? decoded = DateTimeHelper.ReadVendorDateTimeOrNull(encoded, 0);
 
             // Assert
             Assert.IsNotNull(decoded);

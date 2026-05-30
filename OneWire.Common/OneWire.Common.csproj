@@ -42,9 +42,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdapterType.cs" />
+    <Compile Include="ByteArrayHelper.cs" />
+    <Compile Include="DateTimeHelper.cs" />
+    <Compile Include="EndianHelper.cs" />
     <Compile Include="EepromLayout.cs" />
     <Compile Include="EepromData.cs" />
-    <Compile Include="ByteHelper.cs" />
     <Compile Include="CrcHelper.cs" />
     <Compile Include="IBlockWithCrc.cs" />
     <Compile Include="OneWireIdentificationBlock.cs" />

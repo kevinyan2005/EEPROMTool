@@ -150,7 +150,7 @@ namespace ConsoleApp1
             Logger.Info(BitConverter.ToString(userBytes));
             Logger.Info($"CRC16 = 0x{userBlock.Crc16:X4}");
 
-            byte[] eepromImage = ByteHelper.ConcatenateWithPadding(identBytes, calBytes, userBytes);
+            byte[] eepromImage = ByteArrayHelper.ConcatenateWithPadding(identBytes, calBytes, userBytes);
 
             Dump(eepromImage, 8);
             return eepromImage;

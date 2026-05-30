@@ -18,7 +18,7 @@ namespace OneWire.Common
             byte[] data = new byte[EepromLayout.IdBlockLength];
             int offset = 0;
 
-            byte[] versionBytes = ByteHelper.ConvertUInt16ToBytesBigEndian(DataVersion);
+            byte[] versionBytes = EndianHelper.ConvertUInt16ToBytesBigEndian(DataVersion);
             Array.Copy(versionBytes, 0, data, offset, Math.Min(EepromLayout.IdVersionSize, versionBytes.Length));
             offset += EepromLayout.IdVersionSize;
 
