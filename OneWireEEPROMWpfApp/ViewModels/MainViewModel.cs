@@ -44,14 +44,10 @@ namespace OneWireEEPROMWpfApp.ViewModels
         private byte[] _rawEepromBytes;
         private readonly byte _eraseFillByte;
 
-        private const string WriteModeEntire = "Entire EEPROM";
-        private const string WriteModeUserData = "User Data Only";
-        private const string WriteModeErase = "Erase EEPROM";
+        public WriteMode[] WriteModes { get; } = (WriteMode[])Enum.GetValues(typeof(WriteMode));
 
-        public string[] WriteModes { get; } = { WriteModeEntire, WriteModeUserData, WriteModeErase };
-
-        private string _selectedWriteMode;
-        public string SelectedWriteMode
+        private WriteMode _selectedWriteMode;
+        public WriteMode SelectedWriteMode
         {
             get => _selectedWriteMode;
             set
@@ -202,7 +198,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             SaveRawTxtCommand = new RelayCommand(SaveRawTxt);
             ExitCommand = new RelayCommand(() => Application.Current.Shutdown());
 
-            _selectedWriteMode = WriteModeUserData;
+            _selectedWriteMode = WriteMode.UserDataOnly;
             _rawEepromBytes = Array.Empty<byte>();
         }
 
@@ -251,11 +247,12 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
         private async Task WriteMemoryAsync()
         {
-            var (dialogTitle, message) = SelectedWriteMode == WriteModeUserData
-                ? ("Confirm Write", "Proceed with writing user data to EEPROM?")
-                : SelectedWriteMode == WriteModeErase
-                    ? ("Confirm Erase", "Erase the entire EEPROM?")
-                    : ("Confirm Write", "Proceed with writing entire EEPROM?");
+            var (dialogTitle, message) = SelectedWriteMode switch
+            {
+                WriteMode.UserDataOnly => ("Confirm Write", "Proceed with writing user data to EEPROM?"),
+                WriteMode.Erase        => ("Confirm Erase", "Erase the entire EEPROM?"),
+                _                      => ("Confirm Write", "Proceed with writing entire EEPROM?")
+            };
 
             var dialog = new ConfirmWriteDialog
             {
@@ -268,13 +265,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             if (dialog.ShowDialog() != true) return;
 
             IsBusy = true;
-            try
-            {
-                var mode = SelectedWriteMode == WriteModeErase ? WriteMode.Erase
-                    : SelectedWriteMode == WriteModeUserData ? WriteMode.UserDataOnly
-                    : WriteMode.Entire;
-                await ExecuteWriteAsync(mode);
-            }
+            try { await ExecuteWriteAsync(SelectedWriteMode); }
             finally { IsBusy = false; }
         }
 
