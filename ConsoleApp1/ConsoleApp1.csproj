@@ -77,9 +77,9 @@
       <Project>{c5c358a7-8b40-4ae9-8351-5e5e27c34543}</Project>
       <Name>OneWire.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\OneWireController\OneWireController.csproj">
+    <ProjectReference Include="..\OneWire.Adapters\OneWire.Adapters.csproj">
       <Project>{09f472a6-6575-47ed-a0e1-82fdbeba4e99}</Project>
-      <Name>OneWireController</Name>
+      <Name>OneWire.Adapters</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

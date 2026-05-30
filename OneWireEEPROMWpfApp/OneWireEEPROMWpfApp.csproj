@@ -165,9 +165,9 @@
       <Project>{c5c358a7-8b40-4ae9-8351-5e5e27c34543}</Project>
       <Name>OneWire.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\OneWireController\OneWireController.csproj">
+    <ProjectReference Include="..\OneWire.Adapters\OneWire.Adapters.csproj">
       <Project>{09f472a6-6575-47ed-a0e1-82fdbeba4e99}</Project>
-      <Name>OneWireController</Name>
+      <Name>OneWire.Adapters</Name>
     </ProjectReference>
     <ProjectReference Include="..\OneWire.Services\OneWire.Services.csproj">
       <Project>{3A7B9C2D-E1F4-4A5B-8C6D-7E8F9A0B1C2D}</Project>

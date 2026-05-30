@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using OneWire.Common;
-using OneWireController;
+using OneWire.Adapters;
 using slf4net;
 
 namespace OneWire.Services

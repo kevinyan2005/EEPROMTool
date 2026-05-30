@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using OneWire.Common;
-using OneWireController;
+using OneWire.Adapters;
 using slf4net;
 
 

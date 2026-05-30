@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace OneWireController
+namespace OneWire.Adapters
 {
     public interface IOneWireAdapter
     {

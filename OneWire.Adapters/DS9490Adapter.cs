@@ -1,14 +1,13 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using DalSemi.OneWire;
 using DalSemi.OneWire.Adapter;
 using slf4net;
 
-namespace OneWireController
+namespace OneWire.Adapters
 {
     public class DS9490Adapter : IOneWireAdapter
     {
@@ -40,31 +39,25 @@ namespace OneWireController
                 throw new InvalidOperationException("1-Wire adapter not available. Connect the USB adapter and try again.", ex);
             }
         }
-        
+
         public void Connect()
         {
             Logger.Info("Connecting to 1-Wire adapter and searching for the devices...");
-            // get exclusive use of resource
             _adapter.BeginExclusive(true);
 
             _adapter.SetSearchAllDevices();
             _adapter.TargetAllFamilies();
-            _adapter.Speed = OWSpeed.SPEED_REGULAR; //Start at a standard speed
+            _adapter.Speed = OWSpeed.SPEED_REGULAR;
 
-            // get 1-Wire Addresses
             byte[] address = new byte[8];
-            // get the first 1-Wire device's address
-            // keep in mind the first device is not necessarily the first 
-            // device physically located on the network.
             if (_adapter.GetFirstDevice(address, 0))
             {
-                do  // get subsequent 1-Wire device addresses
+                do
                 {
                     Logger.Info($"1-Wire Device Address: {Reverse1WireHexAddress(address)}");
                 }
                 while (_adapter.GetNextDevice(address, 0));
             }
-            // end exclusive use of resource
             _adapter.EndExclusive();
             Logger.Info("Connection established.");
         }
@@ -84,13 +77,13 @@ namespace OneWireController
         public void SkipRom()
         {
             if (!OWReset()) return;
-            _adapter.PutByte(CMD_SKIP_ROM); // Skip ROM cmd
+            _adapter.PutByte(CMD_SKIP_ROM);
         }
 
         public void OverdriveSkipRom()
         {
             if (!OWReset()) return;
-            _adapter.PutByte(CMD_OVERDRIVE_SKIP_ROM); // Override Skip ROM cmd
+            _adapter.PutByte(CMD_OVERDRIVE_SKIP_ROM);
         }
 
         public bool OWReset()
@@ -117,7 +110,7 @@ namespace OneWireController
         public void EnterOverdrive()
         {
             _adapter.Reset();
-            _adapter.PutByte(CMD_OVERDRIVE_SKIP_ROM); // Overdrive Skip ROM
+            _adapter.PutByte(CMD_OVERDRIVE_SKIP_ROM);
             _adapter.Speed = OWSpeed.SPEED_OVERDRIVE;
         }
 
@@ -125,7 +118,7 @@ namespace OneWireController
         {
             _adapter.Speed = OWSpeed.SPEED_REGULAR;
             _adapter.Reset();
-            _adapter.PutByte(CMD_SKIP_ROM); // Skip ROM standard speed
+            _adapter.PutByte(CMD_SKIP_ROM);
         }
 
         public Task<byte[]> ReadMemoryAsync(int address, int length, bool overdrive = false) =>
@@ -138,18 +131,14 @@ namespace OneWireController
 
             for (int i = 0; i < memory.Length; i += blockSize)
             {
-                // Reading a row (8 bytes)
                 Logger.Debug($"Reading 8 bytes from address: {i} ");
                 var bytesRead = await Task.Run(() => ReadMemoryInternal(i, blockSize, false));
                 Array.Copy(bytesRead, 0, memory, i, bytesRead.Length);
-
-                // Report progress
                 progress?.Report((i + blockSize) * 100 / memory.Length);
             }
 
             return memory;
         }
-
 
         public byte[] ReadMemory(int address, int length) => ReadMemoryInternal(address, length, false);
 
@@ -164,37 +153,26 @@ namespace OneWireController
             _adapter.PutByte((byte)(address & 0xFF));
             _adapter.PutByte((byte)((address >> 8) & 0xFF));
 
-
             return Enumerable.Range(0, length)
                 .Select(_ => (byte)_adapter.GetByte())
                 .ToArray();
         }
 
-        /// <summary>
-        /// Read Entire Memory
-        /// </summary>
-        /// <param name="overdrive"></param>
-        /// <param name="progress"></param>
-        /// <returns></returns>
         public async Task<byte[]> ReadEntireMemoryAsync(bool overdrive = false, IProgress<int>? progress = null)
         {
             byte[] memory = new byte[128];
 
             for (int i = 0; i < 128; i += PageSize)
             {
-                // Reading a row (8 bytes)
                 Logger.Debug($"Reading page(32 bytes) from address: {i} ");
-                //var bytesRead = await Task.Run(() => ReadMemoryInternal(i, pageSize, false));
                 var bytesRead = await Task.Run(() => ReadPageInternal(i, false));
                 Array.Copy(bytesRead, 0, memory, i, bytesRead.Length);
-
-                // Report progress
                 progress?.Report((i + PageSize) * 100 / memory.Length);
             }
 
             return memory;
         }
-     
+
         private byte[] ReadPageInternal(int address, bool overdrive)
         {
             if (overdrive) OverdriveSkipRom();
@@ -204,16 +182,12 @@ namespace OneWireController
             _adapter.PutByte((byte)(address & 0xFF));
             _adapter.PutByte((byte)((address >> 8) & 0xFF));
 
-            // Create the destination buffer
             byte[] response = new byte[PageSize];
-
-            // Use GetBlock to read the stream directly into the array
-            // Parameters: (destination array, starting offset in array, number of bytes to read)
             _adapter.GetBlock(response, 0, PageSize);
 
             return response;
         }
-        
+
         public byte[] ReadPage(int pageNumber)
         {
             if (pageNumber < 0 || pageNumber > 3)
@@ -222,13 +196,13 @@ namespace OneWireController
             ushort startAddress = (ushort)(pageNumber * PageSize);
 
             SkipRom();
-            _adapter.PutByte(CMD_READ_MEMORY);  // Read Memory command
-            _adapter.PutByte((byte)(startAddress & 0xFF));  // TA1
-            _adapter.PutByte((byte)(startAddress >> 8));    // TA2,
+            _adapter.PutByte(CMD_READ_MEMORY);
+            _adapter.PutByte((byte)(startAddress & 0xFF));
+            _adapter.PutByte((byte)(startAddress >> 8));
 
             byte[] data = new byte[PageSize];
             for (int i = 0; i < PageSize; i++)
-                data[i] = (byte)_adapter.GetByte(); // read each byte
+                data[i] = (byte)_adapter.GetByte();
 
             return data;
         }
@@ -246,18 +220,14 @@ namespace OneWireController
             {
                 var block = new byte[Math.Min(blockSize, data.Length - i)];
                 Array.Copy(data, i, block, 0, block.Length);
-
-                // Writing a row (8 bytes)
                 await Task.Run(() => WriteMemoryRowInternal((ushort)(i + address), block, overdrive));
-
-                // Report progress
                 progress?.Report((i + block.Length) * 100 / data.Length);
             }
         }
 
         public void WriteMemory(ushort address, byte[] fullData) =>
             WriteMemoryInternal(address, fullData, false);
-        
+
         public void WriteMemoryOverdriveSpeed(ushort address, byte[] fullData) =>
             WriteMemoryInternal(address, fullData, true);
 
@@ -267,44 +237,35 @@ namespace OneWireController
             {
                 var chunk = fullData.Skip(addr).Take(8).PadRight(8).ToArray();
                 Logger.Debug($"Writing 8 bytes to address: {baseAddress + addr} ");
-                
+
                 var stopwatch = Stopwatch.StartNew();
                 WriteScratchpad((ushort)(baseAddress + addr), chunk, overdrive);
                 stopwatch.Stop();
-                
+
                 Logger.Debug($"Done in {stopwatch.ElapsedMilliseconds} ms");
             }
         }
 
         private void WriteMemoryRowInternal(ushort baseAddress, byte[] fullData, bool overdrive)
         {
-            // 1. Validate alignment
             if (baseAddress % 8 != 0)
             {
                 Logger.Error($"Write Skipped: 0x{baseAddress:X4} is not 8-byte aligned.");
                 return;
             }
 
-            // 2. Create a fixed-size buffer of 8 bytes
             byte[] chunk = new byte[8];
             for (int i = 0; i < chunk.Length; i++)
-            {
-                chunk[i] = 0xFF; // Set default EEPROM "empty" state
-            }
+                chunk[i] = 0xFF;
 
             if (fullData != null)
-            {
-                // 3. Copy the data into the buffer. 
-                // Math.Min ensures we don't crash if the input is LARGER than 8.
                 Array.Copy(fullData, chunk, Math.Min(fullData.Length, 8));
-            }
 
             string hexData = BitConverter.ToString(chunk);
             Logger.Debug($"Writing row: 0x{baseAddress:X2} | Data: [{hexData}]");
 
-
             var stopwatch = Stopwatch.StartNew();
-            WriteScratchpad((ushort)(baseAddress), chunk, overdrive);
+            WriteScratchpad(baseAddress, chunk, overdrive);
             stopwatch.Stop();
             Logger.Debug($"Done in {stopwatch.ElapsedMilliseconds} ms");
         }
@@ -313,25 +274,25 @@ namespace OneWireController
         {
             if (data.Length > 8)
                 throw new ArgumentException("Must write up to 8 bytes only");
-            
+
             if (overdrive) OverdriveSkipRom();
             else SkipRom();
-            
+
             _adapter.PutByte(CMD_WRITE_SCRATCHPAD);
             _adapter.PutByte((byte)(address & 0xFF));
             _adapter.PutByte((byte)(address >> 8));
 
             foreach (var b in data) _adapter.PutByte(b);
-            
+
             if (overdrive) OverdriveSkipRom();
             else SkipRom();
-            
+
             _adapter.PutByte(CMD_READ_SCRATCHPAD);
-            
+
             byte[] scratchpad = new byte[13];
             for (int i = 0; i < scratchpad.Length; i++)
                 scratchpad[i] = (byte)_adapter.GetByte();
-            
+
             byte authCode = scratchpad[2];
 
             if (overdrive) OverdriveSkipRom();
@@ -341,33 +302,16 @@ namespace OneWireController
             _adapter.PutByte((byte)(address & 0xFF));
             _adapter.PutByte((byte)(address >> 8));
             _adapter.PutByte(authCode);
-
-            //if (overdrive) Thread.Sleep(15);
-            //await Task.Delay(15);
         }
 
         #region helpers
 
-        private static string Print1WireHexAddress(byte[] buff)
-        {
-            StringBuilder sb = new StringBuilder(buff.Length * 3);
-            for (int i = 7; i > -1; i--)
-            {
-                sb.Append(buff[i].ToString("X2"));
-            }
-            return sb.ToString();
-
-        }
-
         private static string Reverse1WireHexAddress(byte[] buff)
         {
-            var reversed = string.Join(" ", buff.Reverse()
+            return string.Join(" ", System.Linq.Enumerable.Reverse(buff)
                 .Select(b => b.ToString("X2")));
-
-            return reversed;
         }
 
         #endregion
-
     }
 }

@@ -5,7 +5,7 @@ VisualStudioVersion = 17.8.35027.43
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneWireEEPROMWpfApp", "OneWireEEPROMWpfApp\OneWireEEPROMWpfApp.csproj", "{8CEDA4A2-61DC-43E8-A468-029BCDF072AE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneWireController", "OneWireController\OneWireController.csproj", "{09F472A6-6575-47ED-A0E1-82FDBEBA4E99}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneWire.Adapters", "OneWire.Adapters\OneWire.Adapters.csproj", "{09F472A6-6575-47ED-A0E1-82FDBEBA4E99}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{D9F3A713-9CB9-46F6-8660-6709D6F98FDC}"
 EndProject

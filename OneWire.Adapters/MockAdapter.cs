@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using slf4net;
 
-namespace OneWireController
+namespace OneWire.Adapters
 {
     /// <summary>
     /// No-hardware adapter for offline testing. Returns a zeroed 128-byte EEPROM image.

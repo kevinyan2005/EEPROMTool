@@ -1,7 +1,7 @@
 using System;
 using OneWire.Common;
 
-namespace OneWireController
+namespace OneWire.Adapters
 {
     public static class OneWireAdapterFactory
     {
