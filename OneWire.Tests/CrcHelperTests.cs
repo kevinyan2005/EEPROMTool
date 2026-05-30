@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using NUnit.Framework;
 using OneWire.Common;
 
@@ -65,27 +62,27 @@ namespace OneWire.Tests
 
 
         [Test]
-        public void ComputeCrc16_EmptyArray_ReturnsZero()
+        public void ComputeCrc16DallasMaxim_EmptyArray_ReturnsZero()
         {
             // Arrange
             byte[] data = new byte[0];
 
             // Act
-            ushort crc = CrcHelper.ComputeCrc16(data, data.Length);
+            ushort crc = CrcHelper.ComputeCrc16DallasMaxim(data, data.Length);
 
             // Assert
             Assert.AreEqual(0x0000, crc);
         }
 
         [Test]
-        public void ComputeCrc16_SingleByte_ReturnsExpectedValue()
+        public void ComputeCrc16DallasMaxim_SingleByte_ReturnsExpectedValue()
         {
             // Arrange
             byte[] data = { 0xA5 };
             ushort expected = 0x7BC0; // verified expected CRC16 for [0xA5]
 
             // Act
-            ushort actual = CrcHelper.ComputeCrc16(data, data.Length);
+            ushort actual = CrcHelper.ComputeCrc16DallasMaxim(data, data.Length);
 
             // Assert
             Assert.AreEqual(expected, actual, $"CRC16 mismatch for data, expected 0x{expected:X4} but got 0x{actual:X4}");
@@ -110,16 +107,118 @@ namespace OneWire.Tests
             0x00, 0x00, 0xDD, 0xD0, 0xD0, 0xD0, 0xD0, 0xD0, 
             0xD0, 0x00, 0x54, 0x31}, (ushort)0xFB2E)]
 
-        public void ComputeCrc16_ReturnsExpected(byte[] data, ushort expected)
+        public void ComputeCrc16DallasMaxim_ReturnsExpected(byte[] data, ushort expected)
         {
             // Act
-            ushort actual = CrcHelper.ComputeCrc16(data, data.Length);
+            ushort actual = CrcHelper.ComputeCrc16DallasMaxim(data, data.Length);
 
             // Assert
             Assert.AreEqual(expected, actual,
                 $"CRC16 mismatch for data, expected 0x{expected:X4} but got 0x{actual:X4}");
         }
 
-        
+    }
+
+    [TestFixture]
+    public class Crc16CcittTests
+    {
+        // Standard check value: CRC-CCITT (init=0xFFFF) of ASCII "123456789" = 0x29B1
+        private static readonly byte[] CheckSequence = Encoding.ASCII.GetBytes("123456789");
+
+        [Test]
+        public void ComputeCrc16CcittByTable_EmptyData_ReturnsInitialValue()
+        {
+            ushort result = CrcHelper.ComputeCrc16CcittByTable(Array.Empty<byte>(), 0);
+            Assert.AreEqual(0xFFFF, result);
+        }
+
+        [Test]
+        public void ComputeCrc16CcittByTable_EmptyData_CustomInitial_ReturnsInitialValue()
+        {
+            ushort result = CrcHelper.ComputeCrc16CcittByTable(Array.Empty<byte>(), 0, 0x0000);
+            Assert.AreEqual(0x0000, result);
+        }
+
+        [Test]
+        public void ComputeCrc16CcittByTable_CheckSequence_DefaultInit_Returns0x29B1()
+        {
+            ushort result = CrcHelper.ComputeCrc16CcittByTable(CheckSequence, CheckSequence.Length);
+            Assert.AreEqual(0x29B1, result, $"Expected 0x29B1 but got 0x{result:X4}");
+        }
+
+        [Test]
+        public void ComputeCrc16CcittByTable_CheckSequence_XmodemInit_Returns0x31C3()
+        {
+            ushort result = CrcHelper.ComputeCrc16CcittByTable(CheckSequence, CheckSequence.Length, 0x0000);
+            Assert.AreEqual(0x31C3, result, $"Expected 0x31C3 but got 0x{result:X4}");
+        }
+
+        [TestCase(new byte[] { 0x00 }, (ushort)0xE1F0, Description = "Single zero byte, init=0xFFFF")]
+        [TestCase(new byte[] { 0xFF }, (ushort)0xFF00, Description = "Single 0xFF byte, init=0xFFFF")]
+        public void ComputeCrc16CcittByTable_KnownInputs_ReturnExpected(byte[] data, ushort expected)
+        {
+            ushort result = CrcHelper.ComputeCrc16CcittByTable(data, data.Length);
+            Assert.AreEqual(expected, result, $"Expected 0x{expected:X4} but got 0x{result:X4}");
+        }
+
+        [Test]
+        public void ComputeCrc16CcittByTable_LengthLessThanArray_OnlyProcessesSpecifiedBytes()
+        {
+            byte[] data = CheckSequence;
+            ushort partial = CrcHelper.ComputeCrc16CcittByTable(data, 3);
+            ushort full    = CrcHelper.ComputeCrc16CcittByTable(data, data.Length);
+            Assert.AreNotEqual(partial, full);
+        }
+    }
+
+    [TestFixture]
+    public class Crc16CcittPregenTableTests
+    {
+        private static readonly byte[] CheckSequence = Encoding.ASCII.GetBytes("123456789");
+
+        [Test]
+        public void ComputeCrc16CcittByPregenTable_EmptyData_ReturnsInitialValue()
+        {
+            ushort result = CrcHelper.ComputeCrc16CcittByPregenTable(Array.Empty<byte>(), 0);
+            Assert.AreEqual(0xFFFF, result);
+        }
+
+        [Test]
+        public void ComputeCrc16CcittByPregenTable_EmptyData_CustomInitial_ReturnsInitialValue()
+        {
+            ushort result = CrcHelper.ComputeCrc16CcittByPregenTable(Array.Empty<byte>(), 0, 0x0000);
+            Assert.AreEqual(0x0000, result);
+        }
+
+        [Test]
+        public void ComputeCrc16CcittByPregenTable_CheckSequence_DefaultInit_Returns0x29B1()
+        {
+            ushort result = CrcHelper.ComputeCrc16CcittByPregenTable(CheckSequence, CheckSequence.Length);
+            Assert.AreEqual(0x29B1, result, $"Expected 0x29B1 but got 0x{result:X4}");
+        }
+
+        [Test]
+        public void ComputeCrc16CcittByPregenTable_CheckSequence_XmodemInit_Returns0x31C3()
+        {
+            ushort result = CrcHelper.ComputeCrc16CcittByPregenTable(CheckSequence, CheckSequence.Length, 0x0000);
+            Assert.AreEqual(0x31C3, result, $"Expected 0x31C3 but got 0x{result:X4}");
+        }
+
+        [TestCase(new byte[] { 0x00 }, (ushort)0xE1F0, Description = "Single zero byte, init=0xFFFF")]
+        [TestCase(new byte[] { 0xFF }, (ushort)0xFF00, Description = "Single 0xFF byte, init=0xFFFF")]
+        public void ComputeCrc16CcittByPregenTable_KnownInputs_ReturnExpected(byte[] data, ushort expected)
+        {
+            ushort result = CrcHelper.ComputeCrc16CcittByPregenTable(data, data.Length);
+            Assert.AreEqual(expected, result, $"Expected 0x{expected:X4} but got 0x{result:X4}");
+        }
+
+        [Test]
+        public void ComputeCrc16CcittByPregenTable_LengthLessThanArray_OnlyProcessesSpecifiedBytes()
+        {
+            byte[] data = CheckSequence;
+            ushort partial = CrcHelper.ComputeCrc16CcittByPregenTable(data, 3);
+            ushort full    = CrcHelper.ComputeCrc16CcittByPregenTable(data, data.Length);
+            Assert.AreNotEqual(partial, full);
+        }
     }
 }

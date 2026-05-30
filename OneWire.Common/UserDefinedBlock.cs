@@ -29,7 +29,7 @@ namespace OneWire.Common
             var pedBytes = DateTimeHelper.ConvertDateTimeToVendorBytes(ProbeExpiryDate);
             Array.Copy(pedBytes, 0, data, offset, EepromLayout.UserProbeExpirySize);
 
-            Crc16 = CrcHelper.ComputeCrc16(data, data.Length);
+            Crc16 = CrcHelper.ComputeCrc16DallasMaxim(data, data.Length);
 
             byte[] withCrc = new byte[EepromLayout.UserProbeUsageDateOffset + EepromLayout.UserProbeUsageDateSize];
             Array.Copy(data, withCrc, data.Length);
@@ -51,12 +51,12 @@ namespace OneWire.Common
 
         public bool ValidateCrc()
         {
-            return Crc16 == CrcHelper.ComputeCrc16(ToBytes(), LengthWithoutCrc);
+            return Crc16 == CrcHelper.ComputeCrc16DallasMaximByPregenTable(ToBytes(), LengthWithoutCrc);
         }
 
         public void RecalculateCrc()
         {
-            Crc16 = CrcHelper.ComputeCrc16(ToBytes(), LengthWithoutCrc);
+            Crc16 = CrcHelper.ComputeCrc16DallasMaximByPregenTable(ToBytes(), LengthWithoutCrc);
         }
     }
 }

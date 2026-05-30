@@ -50,12 +50,17 @@ namespace OneWire.Services
         {
             var failures = new List<string>();
 
+            ushort idStored = data.Id.Crc16;
             if (!data.Id.ValidateCrc())
-                failures.Add("Identification block");
+                failures.Add($"Identification block (stored=0x{idStored:X4}, computed=0x{data.Id.Crc16:X4})");
+
+            ushort calStored = data.Calibration.Crc16;
             if (!data.Calibration.ValidateCrc())
-                failures.Add("Calibration block");
+                failures.Add($"Calibration block (stored=0x{calStored:X4}, computed=0x{data.Calibration.Crc16:X4})");
+
+            ushort userStored = data.User.Crc16;
             if (!data.User.ValidateCrc())
-                failures.Add("User block");
+                failures.Add($"User block (stored=0x{userStored:X4}, computed=0x{data.User.Crc16:X4})");
 
             if (failures.Count > 0)
                 throw new InvalidDataException(
