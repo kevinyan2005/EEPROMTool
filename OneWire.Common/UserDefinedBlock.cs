@@ -31,13 +31,17 @@ namespace OneWire.Common
 
             Crc16 = CrcHelper.ComputeCrc16(data, data.Length);
 
-            byte[] withCrc = new byte[EepromLayout.UserBlockLength + EepromLayout.CrcSize + EepromLayout.UserProbeUsageDateSize];
+            byte[] withCrc = new byte[EepromLayout.UserProbeUsageDateOffset + EepromLayout.UserProbeUsageDateSize];
             Array.Copy(data, withCrc, data.Length);
 
             var crc16Bytes = BitConverter.GetBytes(Crc16);
             if (BitConverter.IsLittleEndian)
                 Array.Reverse(crc16Bytes);
             Array.Copy(crc16Bytes, 0, withCrc, data.Length, EepromLayout.CrcSize);
+
+            // 0xFF fill between CRC and ProbeUsageDate (row-alignment padding)
+            for (int i = data.Length + EepromLayout.CrcSize; i < EepromLayout.UserProbeUsageDateOffset; i++)
+                withCrc[i] = 0xFF;
 
             byte[] pudBytes = ByteHelper.ConvertDateTimeToVendorBytes(ProbeUsageDate);
             Array.Copy(pudBytes, 0, withCrc, EepromLayout.UserProbeUsageDateOffset, Math.Min(EepromLayout.UserProbeUsageDateSize, pudBytes.Length));
