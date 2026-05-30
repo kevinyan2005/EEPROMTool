@@ -45,6 +45,7 @@
     <Compile Include="ByteArrayHelper.cs" />
     <Compile Include="DateTimeHelper.cs" />
     <Compile Include="EndianHelper.cs" />
+    <Compile Include="HexFormatter.cs" />
     <Compile Include="EepromLayout.cs" />
     <Compile Include="EepromData.cs" />
     <Compile Include="CrcHelper.cs" />

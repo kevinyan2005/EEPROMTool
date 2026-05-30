@@ -8,7 +8,5 @@ namespace OneWire.Services
         void SaveToJson(EepromData data, string path);
         byte[] LoadFromRawTxt(string path);
         void SaveToRawTxt(byte[] data, string path);
-        string FormatHexAscii(byte[] data);
-        string FormatHexRaw(byte[] data);
     }
 }

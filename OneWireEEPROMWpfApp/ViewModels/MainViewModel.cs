@@ -301,7 +301,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             var bytes = await _eepromService.WriteAsync(_eeprom, mode, _eraseFillByte, progress);
             Progress = 0;
             _rawEepromBytes = (byte[])bytes.Clone();
-            HexAsciiText = _fileService.FormatHexAscii(bytes);
+            HexAsciiText = HexFormatter.FormatHexAscii(bytes);
 
             if (mode == WriteMode.Erase)
                 ClearUiState();
@@ -342,7 +342,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             {
                 var bytes = _fileService.LoadFromRawTxt(path);
                 _rawEepromBytes = (byte[])bytes.Clone();
-                HexAsciiText = _fileService.FormatHexAscii(bytes);
+                HexAsciiText = HexFormatter.FormatHexAscii(bytes);
                 ParseEeprom(bytes);
             }
             catch (Exception ex)
@@ -385,7 +385,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             var bytes = await _eepromService.ReadAsync(progress);
             Progress = 0;
             _rawEepromBytes = (byte[])bytes.Clone();
-            HexAsciiText = _fileService.FormatHexAscii(bytes);
+            HexAsciiText = HexFormatter.FormatHexAscii(bytes);
             if (parse) ParseEeprom(bytes);
         }
 
