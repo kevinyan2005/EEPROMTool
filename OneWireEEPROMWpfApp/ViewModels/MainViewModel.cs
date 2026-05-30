@@ -34,6 +34,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         public ICommand SaveJsonCommand { get; }
         public ICommand ExportHexCommand { get; }
         public ICommand SaveRawTxtCommand { get; }
+        public ICommand ExitCommand { get; }
 
         private readonly RelayCommand _readEepromCommand;
         private readonly RelayCommand _writeEepromCommand;
@@ -199,6 +200,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             SaveJsonCommand = new RelayCommand(SaveJson);
             ExportHexCommand = new RelayCommand(ExportHex);
             SaveRawTxtCommand = new RelayCommand(SaveRawTxt);
+            ExitCommand = new RelayCommand(() => Application.Current.Shutdown());
 
             _selectedWriteMode = WriteModeUserData;
             _rawEepromBytes = Array.Empty<byte>();
