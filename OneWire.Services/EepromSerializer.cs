@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using OneWire.Common;
 
@@ -39,7 +41,25 @@ namespace OneWire.Services
             data.User.Crc16             = ByteHelper.ReadUInt16FromBytesBigEndian(raw, offset + EepromLayout.UserCrcOffset);
             data.User.ProbeUsageDate    = ByteHelper.ReadVendorDateTimeOrNull(raw, offset + EepromLayout.UserProbeUsageDateOffset) ?? default;
 
+            ValidateCrc(data);
+
             return data;
+        }
+
+        private static void ValidateCrc(EepromData data)
+        {
+            var failures = new List<string>();
+
+            if (!data.Id.ValidateCrc())
+                failures.Add("Identification block");
+            if (!data.Calibration.ValidateCrc())
+                failures.Add("Calibration block");
+            if (!data.User.ValidateCrc())
+                failures.Add("User block");
+
+            if (failures.Count > 0)
+                throw new InvalidDataException(
+                    $"CRC mismatch in: {string.Join(", ", failures)}.");
         }
 
         public byte[] Encode(EepromData data)

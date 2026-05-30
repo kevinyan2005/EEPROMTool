@@ -401,6 +401,15 @@ namespace OneWireEEPROMWpfApp.ViewModels
                 OnPropertyChanged(nameof(Calibration));
                 OnPropertyChanged(nameof(User));
             }
+            catch (InvalidDataException ex)
+            {
+                Logger.Error($"CRC validation failed: {ex.Message}");
+                MessageBox.Show(
+                    $"{ex.Message}\n\n See raw data in the HEX view.",
+                    "CRC Validation Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
             catch (Exception ex)
             {
                 Logger.Error($"Failed to parse EEPROM data: {ex.Message}");
