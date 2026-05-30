@@ -24,13 +24,6 @@ namespace OneWireEEPROMWpfApp.ViewModels
         private const int SequenceRequiredLen = 2;
 
 
-        public static readonly IReadOnlyDictionary<ProbeTypeEnum, string> TypeToPartNumber =
-            new Dictionary<ProbeTypeEnum, string>
-            {
-                { ProbeTypeEnum.FullFire33, "20893" },
-                { ProbeTypeEnum.FullFire16, "22022" },
-                { ProbeTypeEnum.SideFire33, "20891" },
-            };
 
         public UserDataViewModel(UserDefinedBlock model)
             : this(model, false) { }
@@ -80,9 +73,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         }
 
         public string PartNumber =>
-            _selectedProbe.HasValue && TypeToPartNumber.TryGetValue(_selectedProbe.Value, out var pn)
-                ? pn
-                : string.Empty;
+            _selectedProbe.HasValue ? _selectedProbe.Value.ToPartNumber() : string.Empty;
 
         public string SizeNumber
         {
@@ -268,17 +259,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         {
             Logger.Debug("SyncSelectedProbeFromPartNumber called");
             var currentPartNumber = SplitParts()[0];
-            var match = TypeToPartNumber.FirstOrDefault(x => x.Value == currentPartNumber);
-
-            if (match.Value != null)
-            {
-                _selectedProbe = match.Key;
-            }
-            else
-            {
-                _selectedProbe = null;
-            }
-
+            _selectedProbe = ProbeTypeExtensions.FromPartNumber(currentPartNumber);
             OnPropertyChanged(nameof(SelectedProbe));
             OnPropertyChanged(nameof(PartNumber));
         }
