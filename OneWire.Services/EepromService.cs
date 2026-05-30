@@ -63,27 +63,25 @@ namespace OneWire.Services
             {
                 case WriteMode.Entire:
                 {
-                    const int eepromSize = 128;
                     byte[] vendor = ByteHelper.Concatenate(data.Id.ToBytes(), data.Calibration.ToBytes());
                     byte[] full = ByteHelper.ConcatenateWithPadding(vendor, data.User.ToBytes());
-                    byte[] image = new byte[eepromSize];
+                    byte[] image = new byte[EepromLayout.TotalSize];
                     for (int i = 0; i < image.Length; i++) image[i] = 0xFF;
-                    Array.Copy(full, image, Math.Min(full.Length, eepromSize));
+                    Array.Copy(full, image, Math.Min(full.Length, EepromLayout.TotalSize));
                     return (0, image);
                 }
                 case WriteMode.UserDataOnly:
                 {
-                    const ushort userAreaStart = 80;
-                    const int userAreaSize = 128 - userAreaStart;
+                    const int userAreaSize = EepromLayout.TotalSize - EepromLayout.UserBlockStart;
                     byte[] userData = data.User.ToBytes();
                     byte[] area = new byte[userAreaSize];
                     for (int i = 0; i < area.Length; i++) area[i] = 0xFF;
                     Array.Copy(userData, area, Math.Min(userData.Length, userAreaSize));
-                    return (userAreaStart, area);
+                    return ((ushort)EepromLayout.UserBlockStart, area);
                 }
                 case WriteMode.Erase:
                 {
-                    byte[] eraseImage = new byte[128];
+                    byte[] eraseImage = new byte[EepromLayout.TotalSize];
                     for (int i = 0; i < eraseImage.Length; i++) eraseImage[i] = eraseFillByte;
                     return (0, eraseImage);
                 }

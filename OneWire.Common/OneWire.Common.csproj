@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdapterType.cs" />
+    <Compile Include="EepromLayout.cs" />
     <Compile Include="EepromData.cs" />
     <Compile Include="ByteHelper.cs" />
     <Compile Include="CrcHelper.cs" />

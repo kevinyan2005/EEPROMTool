@@ -390,33 +390,30 @@ namespace OneWireEEPROMWpfApp.ViewModels
         {
             try
             {
-                var offset = 0;
-                Identification.DataVersion = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset);
-                Identification.DataIdent = Encoding.ASCII.GetString(eeprom, offset + 2, 2).TrimEnd('\0');
-                Identification.ChipModel = Encoding.ASCII.GetString(eeprom, offset + 4, 16).TrimEnd('\0');
-                Identification.SerialNumber = Encoding.ASCII.GetString(eeprom, offset + 20, 16).TrimEnd('\0');
-                Identification.Crc = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + 36);
+                var offset = EepromLayout.IdBlockStart;
+                Identification.DataVersion = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + EepromLayout.IdVersionOffset);
+                Identification.DataIdent = Encoding.ASCII.GetString(eeprom, offset + EepromLayout.IdDataIdOffset, EepromLayout.IdDataIdSize).TrimEnd('\0');
+                Identification.ChipModel = Encoding.ASCII.GetString(eeprom, offset + EepromLayout.IdModelOffset, EepromLayout.IdModelSize).TrimEnd('\0');
+                Identification.SerialNumber = Encoding.ASCII.GetString(eeprom, offset + EepromLayout.IdSerialOffset, EepromLayout.IdSerialSize).TrimEnd('\0');
+                Identification.Crc = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + EepromLayout.IdCrcOffset);
 
-                offset = 38;
-                Calibration.GaugeFactors[0].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset);
-                Calibration.GaugeFactors[1].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + 4);
-                Calibration.GaugeFactors[2].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + 8);
-                Calibration.GaugeFactors[3].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + 12);
-                Calibration.ReferenceValue = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + 16);
-                Calibration.ManufactureDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + 20);
-                Calibration.ExpiryDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + 28);
-                Calibration.GaugeType = Encoding.ASCII.GetString(eeprom, offset + 36, 2).TrimEnd('\0');
-                Calibration.Crc = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + 38);
+                offset = EepromLayout.CalBlockStart;
+                Calibration.GaugeFactors[0].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + EepromLayout.CalGaugeFactor0Offset);
+                Calibration.GaugeFactors[1].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + EepromLayout.CalGaugeFactor1Offset);
+                Calibration.GaugeFactors[2].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + EepromLayout.CalGaugeFactor2Offset);
+                Calibration.GaugeFactors[3].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + EepromLayout.CalGaugeFactor3Offset);
+                Calibration.ReferenceValue = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + EepromLayout.CalReferenceValueOffset);
+                Calibration.ManufactureDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + EepromLayout.CalManufactureDateOffset);
+                Calibration.ExpiryDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + EepromLayout.CalExpiryDateOffset);
+                Calibration.GaugeType = Encoding.ASCII.GetString(eeprom, offset + EepromLayout.CalGaugeTypeOffset, EepromLayout.CalGaugeTypeSize).TrimEnd('\0');
+                Calibration.Crc = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + EepromLayout.CalCrcOffset);
 
-                offset = 80;
-                //User.Schema = BitConverter.ToUInt16(eeprom, offset);
-                User.Schema = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset);
-                User.ProbeSerialNumber = Encoding.ASCII.GetString(eeprom, offset + 2, 16).TrimEnd('\0');
-                //User.ProbeExpiryDate = ByteHelper.ReadDateTime(eeprom, offset + 18);
-                User.ProbeExpiryDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + 18);
-                User.Crc = BitConverter.ToUInt16(eeprom, offset + 26);
-                //User.ProbeUsageDate = ByteHelper.ReadDateTime(eeprom, offset + 28);
-                User.ProbeUsageDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + 28);
+                offset = EepromLayout.UserBlockStart;
+                User.Schema = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + EepromLayout.UserSchemaOffset);
+                User.ProbeSerialNumber = Encoding.ASCII.GetString(eeprom, offset + EepromLayout.UserProbeSerialOffset, EepromLayout.UserProbeSerialSize).TrimEnd('\0');
+                User.ProbeExpiryDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + EepromLayout.UserProbeExpiryOffset);
+                User.Crc = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + EepromLayout.UserCrcOffset);
+                User.ProbeUsageDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + EepromLayout.UserProbeUsageDateOffset);
             }
             catch (Exception ex)
             {

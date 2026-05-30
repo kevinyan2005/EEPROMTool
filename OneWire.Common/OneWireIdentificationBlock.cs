@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace OneWire.Common
 {
     public class OneWireIdentificationBlock : IBlockWithCrc
     {
-        public const int LengthWithoutCrc = 36;
+        public const int LengthWithoutCrc = EepromLayout.IdBlockLength;
+
         public ushort DataVersion { get; set; }      // 2 bytes
         public string DataId { get; set; }           // 2 bytes EEPROM chip ID
         public string Model { get; set; }            // 16 bytes (ASCII), e.g. DS2431
@@ -17,43 +15,40 @@ namespace OneWire.Common
 
         public byte[] ToBytes()
         {
-            byte[] data = new byte[36];
+            byte[] data = new byte[EepromLayout.IdBlockLength];
             int offset = 0;
 
             byte[] versionBytes = ByteHelper.ConvertUInt16ToBytesBigEndian(DataVersion);
-            Array.Copy(versionBytes, 0, data, offset, Math.Min(2, versionBytes.Length));
-            offset += 2;
+            Array.Copy(versionBytes, 0, data, offset, Math.Min(EepromLayout.IdVersionSize, versionBytes.Length));
+            offset += EepromLayout.IdVersionSize;
 
             byte[] idBytes = Encoding.ASCII.GetBytes(DataId ?? "");
-            Array.Copy(idBytes, 0, data, offset, Math.Min(2, idBytes.Length));
-            offset += 2;
+            Array.Copy(idBytes, 0, data, offset, Math.Min(EepromLayout.IdDataIdSize, idBytes.Length));
+            offset += EepromLayout.IdDataIdSize;
 
             byte[] modelBytes = Encoding.ASCII.GetBytes(Model ?? "");
-            Array.Copy(modelBytes, 0, data, offset, Math.Min(16, modelBytes.Length));
-            offset += 16;
+            Array.Copy(modelBytes, 0, data, offset, Math.Min(EepromLayout.IdModelSize, modelBytes.Length));
+            offset += EepromLayout.IdModelSize;
 
             byte[] serialBytes = Encoding.ASCII.GetBytes(SerialNumber ?? "");
-            Array.Copy(serialBytes, 0, data, offset, Math.Min(16, serialBytes.Length));
+            Array.Copy(serialBytes, 0, data, offset, Math.Min(EepromLayout.IdSerialSize, serialBytes.Length));
 
-            // Compute CRC16 using shared helper
             Crc16 = CrcHelper.ComputeCrc16(data, data.Length);
 
-            // Append CRC16 to final buffer
-            byte[] withCrc = new byte[data.Length + 2];
+            byte[] withCrc = new byte[EepromLayout.IdBlockLength + EepromLayout.CrcSize];
             Array.Copy(data, withCrc, data.Length);
-            //Array.Copy(BitConverter.GetBytes(Crc16), 0, withCrc, data.Length, 2);
 
             var crc16Bytes = BitConverter.GetBytes(Crc16);
             if (BitConverter.IsLittleEndian)
                 Array.Reverse(crc16Bytes);
-            Array.Copy(crc16Bytes, 0, withCrc, data.Length, 2);
+            Array.Copy(crc16Bytes, 0, withCrc, data.Length, EepromLayout.CrcSize);
 
             return withCrc;
         }
-        
+
         public bool ValidateCrc()
         {
-            return Crc16 == CrcHelper.ComputeCrc16(ToBytes(), LengthWithoutCrc );
+            return Crc16 == CrcHelper.ComputeCrc16(ToBytes(), LengthWithoutCrc);
         }
 
         public void RecalculateCrc()

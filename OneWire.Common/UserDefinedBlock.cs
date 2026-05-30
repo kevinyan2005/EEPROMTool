@@ -1,58 +1,46 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace OneWire.Common
 {
     public class UserDefinedBlock : IBlockWithCrc
     {
-        public const int LengthWithoutCrc = 26;
-        public ushort Schema { get; set; }                 // 2 bytes
-        public string ProbeSerialNumber { get; set; } = ""; // 16 bytes (ASCII)
-        public DateTime ProbeExpiryDate { get; set; } = DateTime.Now.AddYears(2);  // 8 bytes
-        public ushort Crc16 { get; set; }           // 2 bytes
-        public DateTime ProbeUsageDate { get; set; } = DateTime.MaxValue; // 8 bytes
+        public const int LengthWithoutCrc = EepromLayout.UserBlockLength;
+
+        public ushort Schema { get; set; }
+        public string ProbeSerialNumber { get; set; } = "";
+        public DateTime ProbeExpiryDate { get; set; } = DateTime.Now.AddYears(2);
+        public ushort Crc16 { get; set; }
+        public DateTime ProbeUsageDate { get; set; } = DateTime.MaxValue;
 
         public byte[] ToBytes()
         {
-            // Excluding CRC: 26 bytes (2+16+8)
-            byte[] data = new byte[LengthWithoutCrc];
+            byte[] data = new byte[EepromLayout.UserBlockLength];
             int offset = 0;
 
-            // Schema
-            //byte[] schemaBytes = BitConverter.GetBytes(Schema);
             byte[] schemaBytes = ByteHelper.ConvertUInt16ToBytesBigEndian(Schema);
-            Array.Copy(schemaBytes, 0, data, offset, Math.Min(2, schemaBytes.Length));
-            offset += 2;
+            Array.Copy(schemaBytes, 0, data, offset, Math.Min(EepromLayout.UserSchemaSize, schemaBytes.Length));
+            offset += EepromLayout.UserSchemaSize;
 
-            // ProbeSerialNumber (ASCII padded to 16 bytes)
             byte[] probeSerialBytes = Encoding.ASCII.GetBytes(ProbeSerialNumber ?? "");
-            Array.Copy(probeSerialBytes, 0, data, offset, Math.Min(16, probeSerialBytes.Length));
-            offset += 16;
+            Array.Copy(probeSerialBytes, 0, data, offset, Math.Min(EepromLayout.UserProbeSerialSize, probeSerialBytes.Length));
+            offset += EepromLayout.UserProbeSerialSize;
 
-            // ProbeExpiryDate
-            //Array.Copy(BitConverter.GetBytes(ProbeExpiryDate.ToBinary()), 0, data, offset, 8);
             var pedBytes = ByteHelper.ConvertDateTimeToVendorBytes(ProbeExpiryDate);
-            Array.Copy(pedBytes, 0, data, offset, 8);
-            offset += 8;
+            Array.Copy(pedBytes, 0, data, offset, EepromLayout.UserProbeExpirySize);
 
-            // CRC16
             Crc16 = CrcHelper.ComputeCrc16(data, data.Length);
-            byte[] withCrc = new byte[data.Length + 10];
+
+            byte[] withCrc = new byte[EepromLayout.UserBlockLength + EepromLayout.CrcSize + EepromLayout.UserProbeUsageDateSize];
             Array.Copy(data, withCrc, data.Length);
-            //Array.Copy(BitConverter.GetBytes(Crc16), 0, withCrc, data.Length, 2);
 
             var crc16Bytes = BitConverter.GetBytes(Crc16);
             if (BitConverter.IsLittleEndian)
                 Array.Reverse(crc16Bytes);
-            Array.Copy(crc16Bytes, 0, withCrc, data.Length, 2);
+            Array.Copy(crc16Bytes, 0, withCrc, data.Length, EepromLayout.CrcSize);
 
-            // ProbeUsageDate
-            //byte[] pudBytes = BitConverter.GetBytes(ProbeUsageDate.ToBinary());
             byte[] pudBytes = ByteHelper.ConvertDateTimeToVendorBytes(ProbeUsageDate);
-            Array.Copy(pudBytes, 0, withCrc, 28, Math.Min(8, pudBytes.Length));
+            Array.Copy(pudBytes, 0, withCrc, EepromLayout.UserProbeUsageDateOffset, Math.Min(EepromLayout.UserProbeUsageDateSize, pudBytes.Length));
 
             return withCrc;
         }
