@@ -51,8 +51,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EepromFileService.cs" />
+    <Compile Include="EepromSerializer.cs" />
     <Compile Include="EepromService.cs" />
     <Compile Include="IEepromFileService.cs" />
+    <Compile Include="IEepromSerializer.cs" />
     <Compile Include="IEepromService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WriteMode.cs" />

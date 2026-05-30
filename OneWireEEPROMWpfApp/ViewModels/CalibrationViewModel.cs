@@ -28,9 +28,9 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
             if (loadFromData)
             {
-                _referenceValue = data.ReferenceValue;
-                _manufactureDate = data.ManufactureDate == default ? (DateTime?)null : data.ManufactureDate;
-                _expiryDate = data.ExpiryDate == default ? (DateTime?)null : data.ExpiryDate;
+                _referenceValue  = data.ReferenceValue == uint.MaxValue ? (uint?)null : data.ReferenceValue;
+                _manufactureDate = data.ManufactureDate == default      ? (DateTime?)null : data.ManufactureDate;
+                _expiryDate      = data.ExpiryDate      == default      ? (DateTime?)null : data.ExpiryDate;
                 _crc = data.Crc16;
             }
             else
@@ -204,7 +204,9 @@ namespace OneWireEEPROMWpfApp.ViewModels
             _updateCrc = updateCrc;
 
             // If loading, take the value from the array. If not, start as null.
-            _value = loadFromData ? gaugeFactors[index] : (uint?)null;
+            _value = loadFromData
+                ? (gaugeFactors[index] == uint.MaxValue ? (uint?)null : gaugeFactors[index])
+                : (uint?)null;
         }
 
     }

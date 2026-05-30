@@ -11,10 +11,11 @@ namespace OneWireEEPROMWpfApp
             base.OnStartup(e);
 
             IFileDialogService fileDialogService = new FileDialogService();
-            IEepromService eepromService = new EepromService();
+            IEepromSerializer eepromSerializer = new EepromSerializer();
+            IEepromService eepromService = new EepromService(eepromSerializer);
             IEepromFileService fileService = new EepromFileService();
 
-            var mainViewModel = new MainViewModel(fileDialogService, eepromService, fileService);
+            var mainViewModel = new MainViewModel(fileDialogService, eepromService, fileService, eepromSerializer);
 
             var mainWindow = new MainWindow { DataContext = mainViewModel };
             mainWindow.Show();

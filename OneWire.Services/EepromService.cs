@@ -11,7 +11,13 @@ namespace OneWire.Services
     {
         private static ILogger Logger { get; } = LoggerFactory.GetLogger(nameof(EepromService));
 
+        private readonly IEepromSerializer _eepromSerializer;
         private IOneWireAdapter _adapter;
+
+        public EepromService(IEepromSerializer eepromSerializer)
+        {
+            _eepromSerializer = eepromSerializer;
+        }
 
         public bool IsConnected => _adapter != null;
 
@@ -57,19 +63,13 @@ namespace OneWire.Services
             return await _adapter.ReadEntireMemoryAsync(overdrive: false);
         }
 
-        private static (ushort address, byte[] data) BuildImage(EepromData data, WriteMode mode, byte eraseFillByte)
+        private (ushort address, byte[] data) BuildImage(EepromData data, WriteMode mode, byte eraseFillByte)
         {
             switch (mode)
             {
                 case WriteMode.Entire:
-                {
-                    byte[] vendor = ByteHelper.Concatenate(data.Id.ToBytes(), data.Calibration.ToBytes());
-                    byte[] full = ByteHelper.ConcatenateWithPadding(vendor, data.User.ToBytes());
-                    byte[] image = new byte[EepromLayout.TotalSize];
-                    for (int i = 0; i < image.Length; i++) image[i] = 0xFF;
-                    Array.Copy(full, image, Math.Min(full.Length, EepromLayout.TotalSize));
-                    return (0, image);
-                }
+                    return (0, _eepromSerializer.Encode(data));
+
                 case WriteMode.UserDataOnly:
                 {
                     const int userAreaSize = EepromLayout.TotalSize - EepromLayout.UserBlockStart;
@@ -79,12 +79,14 @@ namespace OneWire.Services
                     Array.Copy(userData, area, Math.Min(userData.Length, userAreaSize));
                     return ((ushort)EepromLayout.UserBlockStart, area);
                 }
+
                 case WriteMode.Erase:
                 {
                     byte[] eraseImage = new byte[EepromLayout.TotalSize];
                     for (int i = 0; i < eraseImage.Length; i++) eraseImage[i] = eraseFillByte;
                     return (0, eraseImage);
                 }
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
             }

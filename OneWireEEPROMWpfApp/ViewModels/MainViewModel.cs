@@ -2,7 +2,6 @@ using System;
 using System.Configuration;
 using System.Globalization;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -20,6 +19,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
         private readonly IFileDialogService _fileDialogService;
         private readonly IEepromService _eepromService;
         private readonly IEepromFileService _fileService;
+        private readonly IEepromSerializer _eepromSerializer;
 
         public IdentificationViewModel Identification { get; private set; }
         public CalibrationViewModel Calibration { get; private set; }
@@ -167,7 +167,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             }
         }
 
-        public MainViewModel(IFileDialogService fileDialogService, IEepromService eepromService, IEepromFileService fileService)
+        public MainViewModel(IFileDialogService fileDialogService, IEepromService eepromService, IEepromFileService fileService, IEepromSerializer eepromSerializer)
         {
             SelectedPort = ConfigurationManager.AppSettings["DefaultPort"] ?? "USB1";
             _selectedAdapterType = GetAppSettingAdapterType("AdapterType", AdapterType.DS9490);
@@ -180,6 +180,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
             _fileDialogService = fileDialogService;
             _eepromService = eepromService;
             _fileService = fileService;
+            _eepromSerializer = eepromSerializer;
 
             _eeprom = new EepromData();
             Identification = new IdentificationViewModel(_eeprom.Id);
@@ -386,34 +387,19 @@ namespace OneWireEEPROMWpfApp.ViewModels
             if (parse) ParseEeprom(bytes);
         }
 
-        private void ParseEeprom(byte[] eeprom)
+        private void ParseEeprom(byte[] raw)
         {
             try
             {
-                var offset = EepromLayout.IdBlockStart;
-                Identification.DataVersion = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + EepromLayout.IdVersionOffset);
-                Identification.DataIdent = Encoding.ASCII.GetString(eeprom, offset + EepromLayout.IdDataIdOffset, EepromLayout.IdDataIdSize).TrimEnd('\0');
-                Identification.ChipModel = Encoding.ASCII.GetString(eeprom, offset + EepromLayout.IdModelOffset, EepromLayout.IdModelSize).TrimEnd('\0');
-                Identification.SerialNumber = Encoding.ASCII.GetString(eeprom, offset + EepromLayout.IdSerialOffset, EepromLayout.IdSerialSize).TrimEnd('\0');
-                Identification.Crc = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + EepromLayout.IdCrcOffset);
+                _eeprom = _eepromSerializer.Decode(raw);
 
-                offset = EepromLayout.CalBlockStart;
-                Calibration.GaugeFactors[0].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + EepromLayout.CalGaugeFactor0Offset);
-                Calibration.GaugeFactors[1].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + EepromLayout.CalGaugeFactor1Offset);
-                Calibration.GaugeFactors[2].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + EepromLayout.CalGaugeFactor2Offset);
-                Calibration.GaugeFactors[3].Value = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + EepromLayout.CalGaugeFactor3Offset);
-                Calibration.ReferenceValue = ByteHelper.ReadUInt32FromBytesOrNullWithWordSwap(eeprom, offset + EepromLayout.CalReferenceValueOffset);
-                Calibration.ManufactureDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + EepromLayout.CalManufactureDateOffset);
-                Calibration.ExpiryDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + EepromLayout.CalExpiryDateOffset);
-                Calibration.GaugeType = Encoding.ASCII.GetString(eeprom, offset + EepromLayout.CalGaugeTypeOffset, EepromLayout.CalGaugeTypeSize).TrimEnd('\0');
-                Calibration.Crc = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + EepromLayout.CalCrcOffset);
+                Identification = new IdentificationViewModel(_eeprom.Id, loadFromData: true);
+                Calibration    = new CalibrationViewModel(_eeprom.Calibration, loadFromData: true);
+                User           = new UserDataViewModel(_eeprom.User, loadFromData: true);
 
-                offset = EepromLayout.UserBlockStart;
-                User.Schema = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + EepromLayout.UserSchemaOffset);
-                User.ProbeSerialNumber = Encoding.ASCII.GetString(eeprom, offset + EepromLayout.UserProbeSerialOffset, EepromLayout.UserProbeSerialSize).TrimEnd('\0');
-                User.ProbeExpiryDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + EepromLayout.UserProbeExpiryOffset);
-                User.Crc = ByteHelper.ReadUInt16FromBytesBigEndian(eeprom, offset + EepromLayout.UserCrcOffset);
-                User.ProbeUsageDate = ByteHelper.ReadVendorDateTimeOrNull(eeprom, offset + EepromLayout.UserProbeUsageDateOffset);
+                OnPropertyChanged(nameof(Identification));
+                OnPropertyChanged(nameof(Calibration));
+                OnPropertyChanged(nameof(User));
             }
             catch (Exception ex)
             {
@@ -438,11 +424,7 @@ namespace OneWireEEPROMWpfApp.ViewModels
 
         private void ClearRawDataView() => HexAsciiText = string.Empty;
 
-        private byte[] BuildEepromImage()
-        {
-            byte[] vendor = ByteHelper.Concatenate(_eeprom.Id.ToBytes(), _eeprom.Calibration.ToBytes());
-            return ByteHelper.ConcatenateWithPadding(vendor, _eeprom.User.ToBytes());
-        }
+        private byte[] BuildEepromImage() => _eepromSerializer.Encode(_eeprom);
 
         private static bool GetAppSettingBool(string key, bool defaultValue)
         {
