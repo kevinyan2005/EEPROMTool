@@ -72,7 +72,6 @@ ScaffoldingReadMe.txt
 *_i.c
 *_p.c
 *_h.h
-AssemblyInfo.cs
 *.ilk
 *.meta
 *.obj
