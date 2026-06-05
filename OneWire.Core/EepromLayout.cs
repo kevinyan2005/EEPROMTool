@@ -68,22 +68,25 @@ namespace OneWire.Core
         // ── User block (absolute start: 80) ──────────────────────────────────
         //  Offset  Size  Content
         //       0     2  Schema              (ushort, big-endian)
-        //       2    16  Probe Serial Number (ASCII)
-        //      18     8  Probe Expiry Date   (vendor DateTime)
-        //      26     2  CRC-16              (big-endian)
-        //      28     4  (0xFF fill — row alignment padding)
-        //      32     8  Probe Usage Date    (vendor DateTime)
-        //      40     8  (not used)
-        public const int UserBlockStart           = 80;
-        public const int UserSchemaOffset         = 0;
-        public const int UserProbeSerialOffset    = 2;
-        public const int UserProbeExpiryOffset    = 18;
-        public const int UserCrcOffset            = 26;
-        public const int UserProbeUsageDateOffset = 32;
-        public const int UserSchemaSize           = 2;
-        public const int UserProbeSerialSize      = 16;
-        public const int UserProbeExpirySize      = 8;
-        public const int UserProbeUsageDateSize   = 8;
-        public const int UserBlockLength          = 26;  // bytes before CRC
+        //       2    18  Probe Serial Number (ASCII) — expanded from 16 to support
+        //                probe-length segment (1–3 chars) in FullFire33/SideFire33
+        //      20     8  Probe Expiry Date   (vendor DateTime)
+        //      28     2  CRC-16              (big-endian)
+        //      30     2  (0xFF fill — row alignment padding)
+        //      32     8  Probe Usage Date        (vendor DateTime)
+        //      40     8  Probe Manufacture Date  (vendor DateTime)
+        public const int UserBlockStart                = 80;
+        public const int UserSchemaOffset              = 0;
+        public const int UserProbeSerialOffset         = 2;
+        public const int UserProbeExpiryOffset         = 20;
+        public const int UserCrcOffset                 = 28;
+        public const int UserProbeUsageDateOffset      = 32;
+        public const int UserManufactureDateOffset     = 40;
+        public const int UserSchemaSize                = 2;
+        public const int UserProbeSerialSize           = 18;
+        public const int UserProbeExpirySize           = 8;
+        public const int UserProbeUsageDateSize        = 8;
+        public const int UserManufactureDateSize       = 8;
+        public const int UserBlockLength               = 28;  // bytes before CRC
     }
 }

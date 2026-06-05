@@ -10,9 +10,10 @@ namespace OneWire.Core
 
         public ushort Schema { get; set; }
         public string ProbeSerialNumber { get; set; } = "";
-        public DateTime ProbeExpiryDate { get; set; } = DateTime.Now.AddYears(2);
+        public DateTime ProbeExpiryDate { get; set; } = DateTime.MaxValue;
         public ushort Crc16 { get; set; }
         public DateTime ProbeUsageDate { get; set; } = DateTime.MaxValue;
+        public DateTime ProbeManufactureDate { get; set; } = DateTime.MaxValue;
 
         public byte[] ToBytes()
         {
@@ -32,7 +33,7 @@ namespace OneWire.Core
 
             Crc16 = CrcHelper.ComputeCrc16DallasMaxim(data, data.Length);
 
-            byte[] withCrc = new byte[EepromLayout.UserProbeUsageDateOffset + EepromLayout.UserProbeUsageDateSize];
+            byte[] withCrc = new byte[EepromLayout.UserManufactureDateOffset + EepromLayout.UserManufactureDateSize];
             Array.Copy(data, withCrc, data.Length);
 
             var crc16Bytes = BitConverter.GetBytes(Crc16);
@@ -46,6 +47,9 @@ namespace OneWire.Core
 
             byte[] pudBytes = DateTimeHelper.ConvertDateTimeToVendorBytes(ProbeUsageDate);
             Array.Copy(pudBytes, 0, withCrc, EepromLayout.UserProbeUsageDateOffset, Math.Min(EepromLayout.UserProbeUsageDateSize, pudBytes.Length));
+
+            byte[] mfdBytes = DateTimeHelper.ConvertDateTimeToVendorBytes(ProbeManufactureDate);
+            Array.Copy(mfdBytes, 0, withCrc, EepromLayout.UserManufactureDateOffset, Math.Min(EepromLayout.UserManufactureDateSize, mfdBytes.Length));
 
             return withCrc;
         }

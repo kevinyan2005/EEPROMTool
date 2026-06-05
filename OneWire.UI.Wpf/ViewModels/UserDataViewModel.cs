@@ -15,15 +15,12 @@ namespace OneWire.UI.Wpf.ViewModels
         private readonly UserDefinedBlock _model;
         private ProbeTypeEnum? _selectedProbe;
         private DateTime? _probeUsageDate;
-        private DateTime? _probeExpiryDate;
+        private DateTime? _probeManufactureDate;
         private ushort? _schema;
         private ushort? _crc;
 
-        private const int LenRequiredLen = 1;
         private const int LotRequiredLen = 5;
         private const int SequenceRequiredLen = 2;
-
-
 
         public UserDataViewModel(UserDefinedBlock model)
             : this(model, false) { }
@@ -36,7 +33,7 @@ namespace OneWire.UI.Wpf.ViewModels
             {
                 _schema = model.Schema;
                 _probeUsageDate = model.ProbeUsageDate == default ? (DateTime?)null : model.ProbeUsageDate;
-                _probeExpiryDate = model.ProbeExpiryDate == default ? (DateTime?)null : model.ProbeExpiryDate;
+                _probeManufactureDate = model.ProbeManufactureDate == default ? (DateTime?)null : model.ProbeManufactureDate;
                 _crc = model.Crc16;
                 // Initialize the Enum selection based on whatever string is in the model
                 SyncSelectedProbeFromPartNumber();
@@ -46,7 +43,7 @@ namespace OneWire.UI.Wpf.ViewModels
                 // Fields stay null, serial number remains empty string in model
                 _probeUsageDate = null;
                 _model.ProbeUsageDate = DateTime.MaxValue;
-                _probeExpiryDate = null;
+                _probeManufactureDate = null;
                 _crc = null;
             }
         }
@@ -54,7 +51,7 @@ namespace OneWire.UI.Wpf.ViewModels
         #region Serial Number Logic
 
         /// <summary>
-        /// This property supports the "Read" from EEPROM. 
+        /// This property supports the "Read" from EEPROM.
         /// User.ProbeSerialNumber = Encoding.ASCII.GetString(...).TrimEnd('\0');
         /// </summary>
         public string ProbeSerialNumber
@@ -75,22 +72,65 @@ namespace OneWire.UI.Wpf.ViewModels
         public string PartNumber =>
             _selectedProbe.HasValue ? _selectedProbe.Value.ToPartNumber() : string.Empty;
 
-        public string SizeNumber
+        /// <summary>
+        /// True for FullFire33 and SideFire33 — their serial includes a probe-length segment.
+        /// False for FullFire16 — serial is partNum-lot-sequence only.
+        /// </summary>
+        public bool HasProbeLength =>
+            _selectedProbe.HasValue && _selectedProbe.Value.HasProbeLength();
+
+        /// <summary>
+        /// Probe length segment (e.g. "1", "2", "5", "00", "000").
+        /// Only meaningful when HasProbeLength is true.
+        /// </summary>
+        public string ProbeLength
         {
-            get => SplitParts()[1];
-            set => UpdateProbeSerialNumberComponent(1, value);
+            get => HasProbeLength ? SplitParts()[1] : string.Empty;
+            set
+            {
+                if (!HasProbeLength) return;
+                var parts = SplitParts();
+                parts[1] = value;
+                _model.ProbeSerialNumber = BuildProbeSerialNumber(parts, padSequence: false);
+                NotifySerialNumberProperties();
+                UpdateCrc();
+            }
         }
 
         public string LotNumber
         {
-            get => SplitParts()[2];
-            set => UpdateProbeSerialNumberComponent(2, value);
+            get
+            {
+                var parts = SplitParts();
+                return HasProbeLength ? parts[2] : parts[1];
+            }
+            set
+            {
+                var parts = SplitParts();
+                int idx = HasProbeLength ? 2 : 1;
+                parts[idx] = value;
+                _model.ProbeSerialNumber = BuildProbeSerialNumber(parts, padSequence: false);
+                NotifySerialNumberProperties();
+                UpdateCrc();
+            }
         }
 
         public string Sequence
         {
-            get => SplitParts()[3];
-            set => UpdateProbeSerialNumberComponent(3, value);
+            get
+            {
+                var parts = SplitParts();
+                return HasProbeLength ? parts[3] : parts[2];
+            }
+            set
+            {
+                var parts = SplitParts();
+                int idx = HasProbeLength ? 3 : 2;
+                parts[idx] = value;
+                _model.ProbeSerialNumber = BuildProbeSerialNumber(parts, padSequence: false);
+                NotifySerialNumberProperties();
+                UpdateCrc();
+            }
         }
 
         public ProbeTypeEnum? SelectedProbe
@@ -103,8 +143,10 @@ namespace OneWire.UI.Wpf.ViewModels
                     _selectedProbe = value;
                     OnPropertyChanged(nameof(SelectedProbe));
                     OnPropertyChanged(nameof(PartNumber));
+                    OnPropertyChanged(nameof(HasProbeLength));
+                    RecalculateExpiryDate(); // years offset changes between probe types
 
-                    // Reconstruct the model string because the Part Number changed
+                    // Reconstruct the model string because the part number (and format) changed
                     UpdateProbeSerialNumberFromParts();
                     NotifySerialNumberProperties();
                 }
@@ -121,7 +163,7 @@ namespace OneWire.UI.Wpf.ViewModels
         // Not included for CRC check
         public DateTime? ProbeUsageDate
         {
-            get => _probeUsageDate; // Using same model field as your example
+            get => _probeUsageDate;
             set
             {
                 if (_probeUsageDate == value) return;
@@ -129,7 +171,6 @@ namespace OneWire.UI.Wpf.ViewModels
                 if (value.HasValue)
                 {
                     _model.ProbeUsageDate = value.Value;
-                    //UpdateCrc();
                 }
                 else
                 {
@@ -141,27 +182,26 @@ namespace OneWire.UI.Wpf.ViewModels
             }
         }
 
-
-        public DateTime? ProbeExpiryDate
+        public DateTime? ManufactureDate
         {
-            get => _probeExpiryDate; // Using same model field as your example
+            get => _probeManufactureDate;
             set
             {
-                if (_probeExpiryDate == value) return;
-                _probeExpiryDate = value;
-                if (value.HasValue)
-                {
-                    _model.ProbeExpiryDate = value.Value;
-                    UpdateCrc();
-                }
-                else
-                {
-                    _crc = null;
-                    OnPropertyChanged(nameof(Crc));
-                }
+                if (_probeManufactureDate == value) return;
+                _probeManufactureDate = value;
+                _model.ProbeManufactureDate = value ?? DateTime.MaxValue;
+                RecalculateExpiryDate();
                 OnPropertyChanged();
             }
         }
+
+        /// <summary>
+        /// Read-only. Calculated as ManufactureDate + 2 years (FullFire16) or + 4 years (FullFire33/SideFire33).
+        /// </summary>
+        public DateTime? ProbeExpiryDate =>
+            _probeManufactureDate.HasValue
+                ? _probeManufactureDate.Value.AddYears(HasProbeLength ? 4 : 2)
+                : (DateTime?)null;
 
         public ushort? Schema
         {
@@ -169,7 +209,7 @@ namespace OneWire.UI.Wpf.ViewModels
             set
             {
                 if (_model.Schema == value) return;
-                _schema = value; 
+                _schema = value;
                 if (value.HasValue)
                 {
                     _model.Schema = value.Value;
@@ -181,7 +221,6 @@ namespace OneWire.UI.Wpf.ViewModels
                     OnPropertyChanged(nameof(Crc));
                 }
                 OnPropertyChanged();
-
             }
         }
 
@@ -201,8 +240,7 @@ namespace OneWire.UI.Wpf.ViewModels
 
         protected void UpdateCrc()
         {
-            //if (!_probeUsageDate.HasValue || !_probeExpiryDate.HasValue)
-            if (!_probeExpiryDate.HasValue)
+            if (!_probeManufactureDate.HasValue)
             {
                 _crc = null;
                 OnPropertyChanged(nameof(Crc));
@@ -212,6 +250,14 @@ namespace OneWire.UI.Wpf.ViewModels
             _model.RecalculateCrc();
             _crc = _model.Crc16;
             OnPropertyChanged(nameof(Crc));
+        }
+
+        private void RecalculateExpiryDate()
+        {
+            var expiry = ProbeExpiryDate;
+            _model.ProbeExpiryDate = expiry ?? DateTime.MaxValue;
+            OnPropertyChanged(nameof(ProbeExpiryDate));
+            UpdateCrc();
         }
 
         #endregion
@@ -226,7 +272,6 @@ namespace OneWire.UI.Wpf.ViewModels
             {
                 return propertyName switch
                 {
-                    nameof(SizeNumber) => ValidateExactLength(SizeNumber, LenRequiredLen, "Len"),
                     nameof(LotNumber) => ValidateExactLength(LotNumber, LotRequiredLen, "Lot"),
                     nameof(Sequence) => ValidateExactLength(Sequence, SequenceRequiredLen, "Sequence"),
                     _ => null
@@ -237,92 +282,141 @@ namespace OneWire.UI.Wpf.ViewModels
         private static string ValidateExactLength(string value, int requiredLength, string label)
         {
             if (string.IsNullOrWhiteSpace(value))
-            {
                 return $"{label} is required.";
-            }
-
             if (value.Length != requiredLength)
-            {
                 return $"{label} must be {requiredLength} characters.";
-            }
-
             return null;
         }
 
         #endregion
 
         #region Helper Methods
-        /// <summary>
-        /// Support Bi-directional sync. Handles the case where you read the raw bytes
-        /// </summary>
+
         private void SyncSelectedProbeFromPartNumber()
         {
             Logger.Debug("SyncSelectedProbeFromPartNumber called");
-            var currentPartNumber = SplitParts()[0];
+            var currentPartNumber = (ProbeSerialNumber ?? string.Empty).Split('-').FirstOrDefault() ?? string.Empty;
             _selectedProbe = ProbeTypeExtensions.FromPartNumber(currentPartNumber);
             OnPropertyChanged(nameof(SelectedProbe));
             OnPropertyChanged(nameof(PartNumber));
+            OnPropertyChanged(nameof(HasProbeLength));
         }
 
+        /// <summary>
+        /// Called when the probe type changes. Rebuilds the serial number in the correct format
+        /// for the new probe type, preserving lot and sequence where possible.
+        /// </summary>
         private void UpdateProbeSerialNumberFromParts()
         {
             if (string.IsNullOrEmpty(PartNumber))
-            {
                 return;
+
+            var raw = (ProbeSerialNumber ?? string.Empty).Split('-');
+            string probeLen = string.Empty, lot = string.Empty, seq = string.Empty;
+
+            if (HasProbeLength)
+            {
+                // New format: partNum-probeLen-lot-seq
+                if (raw.Length >= 4)
+                {
+                    // Was already a 4-part format — keep all components
+                    probeLen = raw[1]; lot = raw[2]; seq = raw[3];
+                }
+                else if (raw.Length == 3)
+                {
+                    // Was FullFire16 (no probe length) — preserve lot/seq, clear probe length
+                    lot = raw[1]; seq = raw[2];
+                }
+                else if (raw.Length == 2)
+                {
+                    lot = raw[1];
+                }
+                if (int.TryParse(seq, out int seqInt))
+                    seq = seqInt.ToString("00");
+                _model.ProbeSerialNumber = $"{PartNumber}-{probeLen}-{lot}-{seq}";
             }
-
-            var parts = SplitParts();
-            _model.ProbeSerialNumber = BuildProbeSerialNumber(parts, padSequence: true);
-            UpdateCrc();
-        }
-
-        private void UpdateProbeSerialNumberComponent(int index, string value)
-        {
-            var parts = SplitParts();
-            parts[index] = value;
-
-            // Rebuild the full string to save to model
-            // Note: We use the enum-based PartNumber for index 0 to stay in sync
-            _model.ProbeSerialNumber = BuildProbeSerialNumber(parts, padSequence: false);
-
-            NotifySerialNumberProperties();
+            else
+            {
+                // FullFire16 format: partNum-lot-seq (no probe length)
+                if (raw.Length >= 4)
+                {
+                    // Was a 4-part format — drop probe length, keep lot/seq
+                    lot = raw[2]; seq = raw[3];
+                }
+                else if (raw.Length >= 3)
+                {
+                    lot = raw[1]; seq = raw[2];
+                }
+                else if (raw.Length >= 2)
+                {
+                    lot = raw[1];
+                }
+                if (int.TryParse(seq, out int seqInt))
+                    seq = seqInt.ToString("00");
+                _model.ProbeSerialNumber = $"{PartNumber}-{lot}-{seq}";
+            }
             UpdateCrc();
         }
 
         private void NotifySerialNumberProperties()
         {
             OnPropertyChanged(nameof(ProbeSerialNumber));
-            OnPropertyChanged(nameof(SizeNumber));
+            OnPropertyChanged(nameof(ProbeLength));
             OnPropertyChanged(nameof(LotNumber));
             OnPropertyChanged(nameof(Sequence));
         }
 
+        /// <summary>
+        /// Returns parts indexed for the current probe type:
+        ///   HasProbeLength → [partNum, probeLen, lot, seq]  (4 elements)
+        ///   FullFire16     → [partNum, lot, seq]             (3 elements)
+        /// </summary>
         private string[] SplitParts()
         {
-            var parts = (ProbeSerialNumber ?? string.Empty).Split('-');
-            return new string[]
+            var raw = (ProbeSerialNumber ?? string.Empty).Split('-');
+
+            if (HasProbeLength)
             {
-                parts.ElementAtOrDefault(0) ?? string.Empty,
-                parts.ElementAtOrDefault(1) ?? string.Empty,
-                parts.ElementAtOrDefault(2) ?? string.Empty,
-                parts.ElementAtOrDefault(3) ?? string.Empty,
-            };
+                return new[]
+                {
+                    raw.ElementAtOrDefault(0) ?? string.Empty,
+                    raw.ElementAtOrDefault(1) ?? string.Empty,
+                    raw.ElementAtOrDefault(2) ?? string.Empty,
+                    raw.ElementAtOrDefault(3) ?? string.Empty,
+                };
+            }
+            else
+            {
+                return new[]
+                {
+                    raw.ElementAtOrDefault(0) ?? string.Empty,
+                    raw.ElementAtOrDefault(1) ?? string.Empty,
+                    raw.ElementAtOrDefault(2) ?? string.Empty,
+                };
+            }
         }
 
         private string BuildProbeSerialNumber(string[] parts, bool padSequence)
         {
-		    // Index 3 (Sequence) is padded to 2 digits
-            var sequence = parts[3];
-
-            if (padSequence && int.TryParse(sequence, out int seqInt))
+            if (HasProbeLength)
             {
-                sequence = seqInt.ToString("00");
+                var probeLen = parts.Length > 1 ? parts[1] : string.Empty;
+                var lot      = parts.Length > 2 ? parts[2] : string.Empty;
+                var seq      = parts.Length > 3 ? parts[3] : string.Empty;
+                if (padSequence && int.TryParse(seq, out int seqInt))
+                    seq = seqInt.ToString("00");
+                return $"{PartNumber}-{probeLen}-{lot}-{seq}";
             }
-
-            return $"{PartNumber}-{parts[1]}-{parts[2]}-{sequence}";
+            else
+            {
+                var lot = parts.Length > 1 ? parts[1] : string.Empty;
+                var seq = parts.Length > 2 ? parts[2] : string.Empty;
+                if (padSequence && int.TryParse(seq, out int seqInt))
+                    seq = seqInt.ToString("00");
+                return $"{PartNumber}-{lot}-{seq}";
+            }
         }
 
         #endregion
-  
     }
 }

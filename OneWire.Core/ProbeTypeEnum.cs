@@ -16,7 +16,7 @@ namespace OneWire.Core
             {
                 { ProbeTypeEnum.FullFire33, "20893" },
                 { ProbeTypeEnum.FullFire16, "22022" },
-                { ProbeTypeEnum.SideFire33, "20891" },
+                { ProbeTypeEnum.SideFire33, "28091" },
             };
 
         public static string ToPartNumber(this ProbeTypeEnum probe) =>
@@ -28,5 +28,12 @@ namespace OneWire.Core
                 if (kvp.Value == partNumber) return kvp.Key;
             return null;
         }
+
+        /// <summary>
+        /// FullFire33 and SideFire33 include a probe-length segment in the serial number;
+        /// FullFire16 does not.
+        /// </summary>
+        public static bool HasProbeLength(this ProbeTypeEnum probe) =>
+            probe == ProbeTypeEnum.FullFire33 || probe == ProbeTypeEnum.SideFire33;
     }
 }
