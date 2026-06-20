@@ -180,6 +180,7 @@ namespace OneWire.UI.Wpf.ViewModels
             Identification = new IdentificationViewModel(_eeprom.Id);
             Calibration = new CalibrationViewModel(_eeprom.Calibration);
             User = new UserDataViewModel(_eeprom.User);
+            User.Schema = GetAppSettingUShort("UserDataVersion", 1);
 
             TogglePortCommand = new RelayCommand(TogglePort);
             _readEepromCommand = new RelayCommand(async () => await LoadMemoryAsync(), CanStartOperation);
@@ -446,6 +447,17 @@ namespace OneWire.UI.Wpf.ViewModels
                 byte.TryParse(raw.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hex))
                 return hex;
             return byte.TryParse(raw, out var v) ? v : defaultValue;
+        }
+
+        private static ushort GetAppSettingUShort(string key, ushort defaultValue)
+        {
+            var raw = ConfigurationManager.AppSettings[key];
+            if (string.IsNullOrWhiteSpace(raw)) return defaultValue;
+            raw = raw.Trim();
+            if (raw.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+                ushort.TryParse(raw.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hex))
+                return hex;
+            return ushort.TryParse(raw, out var v) ? v : defaultValue;
         }
 
         private static AdapterType GetAppSettingAdapterType(string key, AdapterType defaultValue)

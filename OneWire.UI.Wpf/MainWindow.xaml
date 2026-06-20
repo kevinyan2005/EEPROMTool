@@ -6,7 +6,7 @@
         xmlns:views="clr-namespace:OneWire.UI.Wpf.Views"
         xmlns:nlogViewer="clr-namespace:NlogViewer;assembly=NlogViewer"
         mc:Ignorable="d"
-        Title="1-Wire EEPROM Test Tool" Height="800" Width="800">
+        Title="1-Wire EEPROM Test Tool" Height="800" Width="860">
     <DockPanel>
         <!-- Menu bar -->
         <Menu DockPanel.Dock="Top">
@@ -35,7 +35,7 @@
             <views:EepromDataView/>
         </StackPanel>
 
-        <nlogViewer:NlogViewer x:Name="logCtrl" MinHeight="320" TimeWidth="auto" LoggerNameWidth="auto"
+        <nlogViewer:NlogViewer x:Name="logCtrl" MinHeight="300" TimeWidth="auto" LoggerNameWidth="auto"
                                LevelWidth="auto"
                                ExceptionWidth="auto" MessageWidth="450" FontSize="11" />
     </DockPanel>
