@@ -25,6 +25,8 @@ namespace OneWire.Core
             offset += EepromLayout.UserSchemaSize;
 
             byte[] probeSerialBytes = Encoding.ASCII.GetBytes(ProbeSerialNumber ?? "");
+            for (int i = 0; i < EepromLayout.UserProbeSerialSize; i++)
+                data[offset + i] = 0x20;
             Array.Copy(probeSerialBytes, 0, data, offset, Math.Min(EepromLayout.UserProbeSerialSize, probeSerialBytes.Length));
             offset += EepromLayout.UserProbeSerialSize;
 

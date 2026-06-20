@@ -205,16 +205,16 @@
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0"  Grid.Column="0" Text="Version:"></TextBlock>
-                        <TextBlock Grid.Row="2"  Grid.Column="0" Text="S/N:" VerticalAlignment="Center"></TextBlock>
-                        <TextBlock Grid.Row="4"  Grid.Column="0" Text="Expiry Date:"></TextBlock>
-                        <TextBlock Grid.Row="6"  Grid.Column="0" Text="Mfg. Date:"></TextBlock>
-                        <TextBlock Grid.Row="8"  Grid.Column="0" Text="Probe Type:"></TextBlock>
+                        <TextBlock Grid.Row="2"  Grid.Column="0" Text="Probe Type:" VerticalAlignment="Center"></TextBlock>
+                        <TextBlock Grid.Row="4"  Grid.Column="0" Text="Probe S/N:"></TextBlock>
+                        <TextBlock Grid.Row="6"  Grid.Column="0" Text="Expiry Date:"></TextBlock>
+                        <TextBlock Grid.Row="8"  Grid.Column="0" Text="Mfg. Date:"></TextBlock>
                         <TextBlock Grid.Row="10" Grid.Column="0" Text="Probe Usage:"
                                    Visibility="{Binding ShowProbeUsageDate, Converter={StaticResource BooleanToVisibilityConverter}}"></TextBlock>
                         <TextBlock Grid.Row="12" Grid.Column="0" Text="Checksum:"></TextBlock>
 
                         <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding User.Schema}" Width="45" HorizontalAlignment="Left"></TextBox>
-                        <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal">
+                        <StackPanel Grid.Row="4" Grid.Column="2" Orientation="Horizontal">
                             <TextBox MinWidth="45" Text="{Binding User.PartNumber, Mode=OneWay}" IsReadOnly="True"></TextBox>
                             <!-- Probe length: only FullFire33 and SideFire33 -->
                             <TextBlock Text=" - " VerticalAlignment="Center"
@@ -230,8 +230,9 @@
                                 <ComboBoxItem>5</ComboBoxItem>
                             </ComboBox>
                             <TextBlock Text=" - " VerticalAlignment="Center" />
-                            <TextBox MinWidth="45"
-                                     MaxLength="5"
+                            <TextBlock Text="M" VerticalAlignment="Center" />
+                            <TextBox MinWidth="35"
+                                     MaxLength="4"
                                      ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"
                                      Text="{Binding User.LotNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}">
                             </TextBox>
@@ -242,13 +243,13 @@
                                      Text="{Binding User.Sequence, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}">
                             </TextBox>
                         </StackPanel>
-                        <TextBlock Grid.Row="4" Grid.Column="2"
+                        <TextBlock Grid.Row="6" Grid.Column="2"
                                    Text="{Binding User.ProbeExpiryDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}" />
-                        <DatePicker Grid.Row="6" Grid.Column="2" Width="120" HorizontalAlignment="Left"
+                        <DatePicker Grid.Row="8" Grid.Column="2" Width="120" HorizontalAlignment="Left"
                                     Language="en-CA"
                                     SelectedDateFormat="Short"
                                     SelectedDate="{Binding User.ManufactureDate, Mode=TwoWay, TargetNullValue={x:Null}}" />
-                        <ComboBox Grid.Row="8" Grid.Column="2" Width="100" HorizontalAlignment="Left"
+                        <ComboBox Grid.Row="2" Grid.Column="2" Width="100" HorizontalAlignment="Left"
                                   ItemsSource="{Binding User.AvailableProbes}"
                                   SelectedItem="{Binding User.SelectedProbe, Mode=TwoWay}" />
                         <TextBox Grid.Row="10" Grid.Column="2"

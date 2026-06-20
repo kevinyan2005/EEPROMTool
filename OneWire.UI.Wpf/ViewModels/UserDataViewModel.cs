@@ -19,7 +19,7 @@ namespace OneWire.UI.Wpf.ViewModels
         private ushort? _schema;
         private ushort? _crc;
 
-        private const int LotRequiredLen = 5;
+        private const int LotRequiredLen = 4;
         private const int SequenceRequiredLen = 2;
 
         public UserDataViewModel(UserDefinedBlock model)
@@ -102,13 +102,14 @@ namespace OneWire.UI.Wpf.ViewModels
             get
             {
                 var parts = SplitParts();
-                return HasProbeLength ? parts[2] : parts[1];
+                var lot = HasProbeLength ? parts[2] : parts[1];
+                return lot.StartsWith("M") ? lot.Substring(1) : lot;
             }
             set
             {
                 var parts = SplitParts();
                 int idx = HasProbeLength ? 2 : 1;
-                parts[idx] = value;
+                parts[idx] = "M" + (value ?? string.Empty);
                 _model.ProbeSerialNumber = BuildProbeSerialNumber(parts, padSequence: false);
                 NotifySerialNumberProperties();
                 UpdateCrc();
@@ -272,11 +273,20 @@ namespace OneWire.UI.Wpf.ViewModels
             {
                 return propertyName switch
                 {
-                    nameof(LotNumber) => ValidateExactLength(LotNumber, LotRequiredLen, "Lot"),
+                    nameof(LotNumber) => ValidateLotNumber(LotNumber),
                     nameof(Sequence) => ValidateExactLength(Sequence, SequenceRequiredLen, "Sequence"),
                     _ => null
                 };
             }
+        }
+
+        private static string ValidateLotNumber(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return "Lot is required.";
+            if (value.Length != LotRequiredLen)
+                return $"Lot must be {LotRequiredLen} characters.";
+            return null;
         }
 
         private static string ValidateExactLength(string value, int requiredLength, string label)

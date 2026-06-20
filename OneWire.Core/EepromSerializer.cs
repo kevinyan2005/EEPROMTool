@@ -36,7 +36,7 @@ namespace OneWire.Core
             // User block
             offset = EepromLayout.UserBlockStart;
             data.User.Schema                = EndianHelper.ReadUInt16FromBytesBigEndian(raw, offset + EepromLayout.UserSchemaOffset);
-            data.User.ProbeSerialNumber     = Encoding.ASCII.GetString(raw, offset + EepromLayout.UserProbeSerialOffset, EepromLayout.UserProbeSerialSize).TrimEnd('\0');
+            data.User.ProbeSerialNumber     = Encoding.ASCII.GetString(raw, offset + EepromLayout.UserProbeSerialOffset, EepromLayout.UserProbeSerialSize).TrimEnd('\0', ' ');
             data.User.ProbeExpiryDate       = DateTimeHelper.ReadVendorDateTimeOrNull(raw, offset + EepromLayout.UserProbeExpiryOffset)         ?? default;
             data.User.Crc16                 = EndianHelper.ReadUInt16FromBytesBigEndian(raw, offset + EepromLayout.UserCrcOffset);
             data.User.ProbeUsageDate        = DateTimeHelper.ReadVendorDateTimeOrNull(raw, offset + EepromLayout.UserProbeUsageDateOffset)    ?? default;
