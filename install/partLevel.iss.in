@@ -1,2 +1,2 @@
 [Files]
-Source: "{#rootDir}../OneWireEEPROMWpfApp/bin/@Configuration@/*"; DestDir: "{#installDir}"; Components: ; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#rootDir}../OneWire.UI.Wpf/bin/@Configuration@/*"; DestDir: "{#installDir}"; Components: ; Flags: ignoreversion recursesubdirs createallsubdirs

@@ -11,7 +11,7 @@
         <copyright>Copyright © 2025 Monteris Medical Inc.</copyright>
     </metadata>
     <files>
-        <file src="..\OneWireEEPROMWpfApp\bin\@Configuration@\**\*.*" target="native\OneWireEEPROMWpfApp\bin\@Configuration@" />
+        <file src="..\OneWire.UI.Wpf\bin\@Configuration@\**\*.*" target="native\OneWire.UI.Wpf\bin\@Configuration@" />
         <file src="partInfo.iss" target="native\install" />
         <file src="partLevel.iss" target="native\install" />
     </files>
