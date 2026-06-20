@@ -317,7 +317,7 @@ namespace OneWire.UI.Wpf.ViewModels
 
         private void SaveJson()
         {
-            var path = _fileDialogService.SaveFile("JSON files|*.json");
+            var path = _fileDialogService.SaveFile("JSON files|*.json", BuildDefaultFileName());
             if (path == null) return;
             _manager.SaveToJson(_eeprom, path);
         }
@@ -347,7 +347,7 @@ namespace OneWire.UI.Wpf.ViewModels
 
         private void SaveRawTxt()
         {
-            var path = _fileDialogService.SaveFile("Text files|*.txt");
+            var path = _fileDialogService.SaveFile("Text files|*.txt", BuildDefaultFileName());
             if (path == null) return;
             var data = _rawEepromBytes != null && _rawEepromBytes.Length > 0
                 ? _rawEepromBytes
@@ -357,7 +357,7 @@ namespace OneWire.UI.Wpf.ViewModels
 
         private void ExportHex()
         {
-            var path = _fileDialogService.SaveFile("Text files|*.txt");
+            var path = _fileDialogService.SaveFile("Text files|*.txt", "hex_dump_" + BuildDefaultFileName());
             if (path == null) return;
             File.WriteAllText(path, HexAsciiText ?? string.Empty);
         }
@@ -367,6 +367,13 @@ namespace OneWire.UI.Wpf.ViewModels
         #region Helpers
 
         private bool CanStartOperation() => IsPortOpen && !IsBusy;
+
+        private string BuildDefaultFileName()
+        {
+            var serial = Identification?.SerialNumber?.Trim() ?? string.Empty;
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+            return string.IsNullOrEmpty(serial) ? timestamp : $"{serial}_{timestamp}";
+        }
 
         private async Task ReadEepromInternalAsync()
         {
