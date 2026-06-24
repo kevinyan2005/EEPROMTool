@@ -25,6 +25,7 @@ namespace OneWire.UI.Wpf.ViewModels
         public CalibrationViewModel Calibration { get; private set; }
         public UserDataViewModel User { get; private set; }
 
+        public ICommand RefreshPortsCommand { get; }
         public ICommand TogglePortCommand { get; }
         public ICommand ReadEepromCommand { get; }
         public ICommand WriteEepromCommand { get; }
@@ -72,19 +73,9 @@ namespace OneWire.UI.Wpf.ViewModels
             private set { _availablePorts = value; OnPropertyChanged(); }
         }
 
-        public AdapterType[] AdapterTypes { get; } = (AdapterType[])Enum.GetValues(typeof(AdapterType));
-
-        private AdapterType _selectedAdapterType;
-        public AdapterType SelectedAdapterType
-        {
-            get => _selectedAdapterType;
-            set
-            {
-                if (_selectedAdapterType == value) return;
-                _selectedAdapterType = value;
-                OnPropertyChanged();
-            }
-        }
+        private readonly AdapterType _selectedAdapterType;
+        public AdapterType SelectedAdapterType => _selectedAdapterType;
+        public bool IsPortRequired => _selectedAdapterType != AdapterType.Mock;
 
         private bool _isPortOpen;
         public bool IsPortOpen
@@ -173,9 +164,11 @@ namespace OneWire.UI.Wpf.ViewModels
 
         public MainViewModel(IFileDialogService fileDialogService, IEepromDataManager manager)
         {
-            SelectedPort = ConfigurationManager.AppSettings["DefaultPort"] ?? "USB1";
-            RefreshAvailablePorts();
             _selectedAdapterType = GetAppSettingAdapterType("AdapterType", AdapterType.DS9490);
+            RefreshAvailablePorts();
+            SelectedPort = _selectedAdapterType == AdapterType.DS9490
+                ? "USB1"
+                : AvailablePorts.FirstOrDefault() ?? string.Empty;
             AllowEditIdentification = GetAppSettingBool("AllowEditIdentification", defaultValue: true);
             AllowEditCalibration = GetAppSettingBool("AllowEditCalibration", defaultValue: true);
             ShowOverdriveCheckbox = GetAppSettingBool("ShowOverdriveCheckbox", defaultValue: false);
@@ -203,6 +196,7 @@ namespace OneWire.UI.Wpf.ViewModels
             SaveJsonCommand = new RelayCommand(SaveJson);
             ExportHexCommand = new RelayCommand(ExportHex);
             SaveRawTxtCommand = new RelayCommand(SaveRawTxt);
+            RefreshPortsCommand = new RelayCommand(RefreshAvailablePorts);
             ExitCommand = new RelayCommand(() => Application.Current.Shutdown());
 
             _selectedWriteMode = WriteMode.UserDataOnly;
@@ -443,10 +437,22 @@ namespace OneWire.UI.Wpf.ViewModels
 
         private void RefreshAvailablePorts()
         {
-            var detected = SerialPortDetector.AutoDetectActiveSerialPorts() ?? Array.Empty<string>();
-            AvailablePorts = detected
-                .Select(s => { var i = s.IndexOf(':'); return i > 0 ? s.Substring(0, i).Trim() : s.Trim(); })
-                .ToArray();
+            switch (_selectedAdapterType)
+            {
+                case AdapterType.DS9490:
+                    //AvailablePorts = new[] { "USB1", "USB2", "USB3", "USB4" };
+                    AvailablePorts = new[] { "USB1" };
+                    break;
+                case AdapterType.Mock:
+                    AvailablePorts = Array.Empty<string>();
+                    break;
+                default:
+                    var detected = SerialPortDetector.AutoDetectActiveSerialPorts() ?? Array.Empty<string>();
+                    AvailablePorts = detected
+                        .Select(s => { var i = s.IndexOf(':'); return i > 0 ? s.Substring(0, i).Trim() : s.Trim(); })
+                        .ToArray();
+                    break;
+            }
         }
 
         private static bool GetAppSettingBool(string key, bool defaultValue)
