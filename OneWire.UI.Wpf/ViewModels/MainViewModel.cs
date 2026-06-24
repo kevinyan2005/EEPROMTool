@@ -2,6 +2,7 @@ using System;
 using System.Configuration;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -62,6 +63,13 @@ namespace OneWire.UI.Wpf.ViewModels
         {
             get => _selectedPort;
             set { _selectedPort = value; OnPropertyChanged(); }
+        }
+
+        private string[] _availablePorts = Array.Empty<string>();
+        public string[] AvailablePorts
+        {
+            get => _availablePorts;
+            private set { _availablePorts = value; OnPropertyChanged(); }
         }
 
         public AdapterType[] AdapterTypes { get; } = (AdapterType[])Enum.GetValues(typeof(AdapterType));
@@ -166,6 +174,7 @@ namespace OneWire.UI.Wpf.ViewModels
         public MainViewModel(IFileDialogService fileDialogService, IEepromDataManager manager)
         {
             SelectedPort = ConfigurationManager.AppSettings["DefaultPort"] ?? "USB1";
+            RefreshAvailablePorts();
             _selectedAdapterType = GetAppSettingAdapterType("AdapterType", AdapterType.DS9490);
             AllowEditIdentification = GetAppSettingBool("AllowEditIdentification", defaultValue: true);
             AllowEditCalibration = GetAppSettingBool("AllowEditCalibration", defaultValue: true);
@@ -431,6 +440,14 @@ namespace OneWire.UI.Wpf.ViewModels
         }
 
         private void ClearRawDataView() => HexAsciiText = string.Empty;
+
+        private void RefreshAvailablePorts()
+        {
+            var detected = SerialPortDetector.AutoDetectActiveSerialPorts() ?? Array.Empty<string>();
+            AvailablePorts = detected
+                .Select(s => { var i = s.IndexOf(':'); return i > 0 ? s.Substring(0, i).Trim() : s.Trim(); })
+                .ToArray();
+        }
 
         private static bool GetAppSettingBool(string key, bool defaultValue)
         {

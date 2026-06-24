@@ -54,6 +54,7 @@ namespace OneWire.Core
             EnsureConnected();
             var (address, imageBytes) = BuildImage(data, mode, eraseFillByte);
             await MeasureAsync(() => _adapter.WriteMemoryAsync(address, imageBytes, _useOverdrive, progress), $"Write EEPROM ({mode})");
+            await Task.Delay(1000);
             return await _adapter.ReadEntireMemoryAsync(_useOverdrive);
         }
 

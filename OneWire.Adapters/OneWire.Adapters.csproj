@@ -64,6 +64,8 @@
     <Compile Include="DS9490Adapter.cs" />
     <Compile Include="IOneWireAdapter.cs" />
     <Compile Include="MockAdapter.cs" />
+    <Compile Include="MrpcbFunctionPayloadBuilder.cs" />
+    <Compile Include="SerialPortAdapter.cs" />
     <Compile Include="OneWireAdapterFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -75,6 +77,10 @@
     <ProjectReference Include="..\OneWire.Common\OneWire.Common.csproj">
       <Project>{c5c358a7-8b40-4ae9-8351-5e5e27c34543}</Project>
       <Name>OneWire.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\MotionCalibrationTool\mmi.HcbProtocol\mmi.HcbProtocol.csproj">
+      <Project>{5E03E599-0C2B-4957-B5C8-75F2E9FB518D}</Project>
+      <Name>mmi.HcbProtocol</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

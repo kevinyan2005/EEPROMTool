@@ -1,4 +1,5 @@
 using System;
+using mmi.HcbProtocol;
 using OneWire.Common;
 
 namespace OneWire.Adapters
@@ -13,10 +14,12 @@ namespace OneWire.Adapters
                     return new DS9490Adapter(port);
                 case AdapterType.Mock:
                     return new MockAdapter();
+                case AdapterType.HCB:
+                    throw new NotImplementedException("HCB adapter is not yet implemented.");
                 case AdapterType.DCT:
                     throw new NotImplementedException("DCT adapter is not yet implemented.");
                 case AdapterType.MRPCB:
-                    throw new NotImplementedException("MRPCB adapter is not yet implemented.");
+                    return new SerialPortAdapter(port, new MrpcbProtocolClient(port));
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown adapter type.");
             }

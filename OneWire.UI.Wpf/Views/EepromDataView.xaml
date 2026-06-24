@@ -17,10 +17,25 @@
             <StackPanel Orientation="Horizontal">
                 <GroupBox Header="Connectivity" Padding="0,6,0,3" Margin="3,0,0,0">
                     <StackPanel Orientation="Horizontal">
-                        <Label Content="Port:"></Label>
-                        <TextBox Text="{Binding SelectedPort}" IsReadOnly="True" VerticalContentAlignment="Center"
-                                 MinWidth="60">
-                        </TextBox>
+                        <Label Content="Adapter:" VerticalContentAlignment="Center"/>
+                        <ComboBox Width="150" VerticalContentAlignment="Center"
+                                  ItemsSource="{Binding AdapterTypes}"
+                                  SelectedItem="{Binding SelectedAdapterType, Mode=TwoWay}"
+                                  IsEnabled="{Binding IsPortOpen, Converter={StaticResource InverseBoolConverter}}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={StaticResource EnumDescriptionConverter}}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Label Content="  "/>
+                        <Label Content="Port:" VerticalContentAlignment="Center"/>
+                        <ComboBox IsEditable="True"
+                                  MinWidth="80"
+                                  VerticalContentAlignment="Center"
+                                  ItemsSource="{Binding AvailablePorts}"
+                                  Text="{Binding SelectedPort, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="{Binding IsPortOpen, Converter={StaticResource InverseBoolConverter}}"/>
                         <Label Content=""></Label>
                         <ToggleButton Command="{Binding TogglePortCommand}" Width="90">
                             <ToggleButton.Style>

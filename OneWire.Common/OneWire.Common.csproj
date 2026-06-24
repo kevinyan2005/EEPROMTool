@@ -47,6 +47,7 @@
     <Compile Include="DateTimeHelper.cs" />
     <Compile Include="EndianHelper.cs" />
     <Compile Include="HexFormatter.cs" />
+    <Compile Include="MrpcbFunctionCode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
