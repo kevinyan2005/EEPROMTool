@@ -252,7 +252,7 @@
                         </StackPanel>
                         <TextBox Grid.Row="6" Grid.Column="2"
                                  IsReadOnly="True"
-                                 Text="{Binding User.ProbeExpiryDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}" />
+                                 Text="{Binding User.ProbeExpiryDate, Mode=OneWay, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}" />
                         <DatePicker Grid.Row="8" Grid.Column="2" Width="120" HorizontalAlignment="Left"
                                     Language="en-CA"
                                     SelectedDateFormat="Short"
