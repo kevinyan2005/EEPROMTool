@@ -33,6 +33,9 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="mmi.HcbProtocol, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\mmi.HcbProtocol.1.0.0\lib\net472\mmi.HcbProtocol.dll</HintPath>
+    </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>..\packages\NLog.4.6.8\lib\net45\NLog.dll</HintPath>
     </Reference>
@@ -77,10 +80,6 @@
     <ProjectReference Include="..\OneWire.Common\OneWire.Common.csproj">
       <Project>{c5c358a7-8b40-4ae9-8351-5e5e27c34543}</Project>
       <Name>OneWire.Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\MotionCalibrationTool\mmi.HcbProtocol\mmi.HcbProtocol.csproj">
-      <Project>{5E03E599-0C2B-4957-B5C8-75F2E9FB518D}</Project>
-      <Name>mmi.HcbProtocol</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -35,6 +35,7 @@ namespace OneWire.Adapters
         {
             _portName = portName ?? throw new ArgumentNullException(nameof(portName));
             _client = client ?? throw new ArgumentNullException(nameof(client));
+            _client.Configure(portName, 460800);
             _client.HeartbeatResponseReceived += OnHeartbeatResponseReceived;
         }
 
