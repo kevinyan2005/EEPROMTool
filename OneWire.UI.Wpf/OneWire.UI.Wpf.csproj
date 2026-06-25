@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -96,6 +96,7 @@
     <Compile Include="RelayCommand.cs" />
     <Compile Include="SerialPortDetector.cs" />
     <Compile Include="ViewModels\CalibrationViewModel.cs" />
+    <Compile Include="ViewModels\ConnectivityViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\IFileDialogService.cs" />
     <Compile Include="ViewModels\IdentificationViewModel.cs" />
@@ -106,6 +107,9 @@
     </Compile>
     <Compile Include="Views\ConfirmWriteDialog.xaml.cs">
       <DependentUpon>ConfirmWriteDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ConnectivityView.xaml.cs">
+      <DependentUpon>ConnectivityView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\EepromDataView.xaml.cs">
       <DependentUpon>EepromDataView.xaml</DependentUpon>
@@ -122,7 +126,15 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Styles\DataGridStyles.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\EepromDataView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ConnectivityView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -179,6 +191,7 @@
       <Name>OneWire.Core</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\mmi.utils.9.2.0\build\mmi.utils.targets" Condition="Exists('..\packages\mmi.utils.9.2.0\build\mmi.utils.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

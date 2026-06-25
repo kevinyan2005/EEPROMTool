@@ -1,0 +1,76 @@
+<UserControl x:Class="OneWire.UI.Wpf.Views.ConnectivityView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:converters="clr-namespace:OneWire.UI.Wpf.Converters"
+             xmlns:fa="http://schemas.fontawesome.io/icons/"
+             mc:Ignorable="d"
+             d:DesignHeight="80" d:DesignWidth="360">
+    <UserControl.Resources>
+        <converters:InverseBooleanConverter x:Key="InverseBoolConverter" />
+        <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
+    <GroupBox Header="Connectivity" Padding="0,6,0,3" Margin="3,0,0,0">
+        <StackPanel Orientation="Horizontal">
+            <Label Content="Adapter:" VerticalContentAlignment="Center"/>
+            <TextBox Text="{Binding SelectedAdapterType, Mode=OneWay, Converter={StaticResource EnumDescriptionConverter}}"
+                     IsReadOnly="True" VerticalAlignment="Center" Height="25" VerticalContentAlignment="Center"
+                     MinWidth="140" Margin="2,0,0,0"/>
+            <Label Content="Port:" VerticalContentAlignment="Center" Margin="2,0,0,0"
+                   Visibility="{Binding IsPortRequired, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <ComboBox IsEditable="True"
+                      MinWidth="80"
+                      VerticalContentAlignment="Center"
+                      ItemsSource="{Binding AvailablePorts}"
+                      Text="{Binding SelectedPort, UpdateSourceTrigger=PropertyChanged}"
+                      IsEnabled="{Binding IsPortOpen, Converter={StaticResource InverseBoolConverter}}"
+                      Visibility="{Binding IsPortRequired, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <Label Content=""></Label>
+
+            <Button Width="28"
+                    Height="28"
+                    Padding="0"
+                    Margin="0"
+                    ToolTip="Refresh serial ports"
+                    Command="{Binding RefreshPortsCommand}"
+                    Visibility="{Binding IsPortRequired, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    AutomationProperties.AutomationId="RefreshSerialPortsButton">
+                <fa:ImageAwesome Icon="Refresh"
+                                 Width="16"
+                                 Height="16"
+                                 Foreground="#FF1A1A1A"/>
+            </Button>
+
+            <Label Content=""></Label>
+
+            <ToggleButton Command="{Binding TogglePortCommand}" Width="90">
+                <ToggleButton.Style>
+                    <Style TargetType="ToggleButton">
+                        <Setter Property="Content" Value="Connect" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsPortOpen}" Value="true">
+                                <Setter Property="Content" Value="Disconnect" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ToggleButton.Style>
+            </ToggleButton>
+            <Ellipse Width="16" Height="16" Stroke="Black" StrokeThickness="1" Margin="10,0,0,0"
+                     VerticalAlignment="Center">
+                <Ellipse.Style>
+                    <Style TargetType="Ellipse">
+                        <Setter Property="Fill" Value="Gray" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsPortOpen}" Value="true">
+                                <Setter Property="Fill" Value="LimeGreen" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Ellipse.Style>
+            </Ellipse>
+            <Label Content=" "></Label>
+        </StackPanel>
+    </GroupBox>
+</UserControl>

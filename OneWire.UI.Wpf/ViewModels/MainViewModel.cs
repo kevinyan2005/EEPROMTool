@@ -1,12 +1,11 @@
 using System;
 using System.Configuration;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using OneWire.Adapters;
 using OneWire.Common;
 using OneWire.Core;
 using OneWire.UI.Wpf.Views;
@@ -21,12 +20,11 @@ namespace OneWire.UI.Wpf.ViewModels
         private readonly IFileDialogService _fileDialogService;
         private readonly IEepromDataManager _manager;
 
+        public ConnectivityViewModel Connectivity { get; }
         public IdentificationViewModel Identification { get; private set; }
         public CalibrationViewModel Calibration { get; private set; }
         public UserDataViewModel User { get; private set; }
 
-        public ICommand RefreshPortsCommand { get; }
-        public ICommand TogglePortCommand { get; }
         public ICommand ReadEepromCommand { get; }
         public ICommand WriteEepromCommand { get; }
         public ICommand EraseEepromCommand { get; }
@@ -59,38 +57,6 @@ namespace OneWire.UI.Wpf.ViewModels
             }
         }
 
-        private string _selectedPort;
-        public string SelectedPort
-        {
-            get => _selectedPort;
-            set { _selectedPort = value; OnPropertyChanged(); }
-        }
-
-        private string[] _availablePorts = Array.Empty<string>();
-        public string[] AvailablePorts
-        {
-            get => _availablePorts;
-            private set { _availablePorts = value; OnPropertyChanged(); }
-        }
-
-        private readonly AdapterType _selectedAdapterType;
-        public AdapterType SelectedAdapterType => _selectedAdapterType;
-        public bool IsPortRequired => _selectedAdapterType != AdapterType.Mock;
-
-        private bool _isPortOpen;
-        public bool IsPortOpen
-        {
-            get => _isPortOpen;
-            set
-            {
-                _isPortOpen = value;
-                OnPropertyChanged();
-                _readEepromCommand?.RaiseCanExecuteChanged();
-                _writeEepromCommand?.RaiseCanExecuteChanged();
-                _eraseEepromCommand?.RaiseCanExecuteChanged();
-            }
-        }
-
         private bool _allowEditIdentification;
         public bool AllowEditIdentification
         {
@@ -105,32 +71,11 @@ namespace OneWire.UI.Wpf.ViewModels
             set { if (_allowEditCalibration == value) return; _allowEditCalibration = value; OnPropertyChanged(); }
         }
 
-        private bool _showOverdriveCheckbox;
-        public bool ShowOverdriveCheckbox
-        {
-            get => _showOverdriveCheckbox;
-            set { if (_showOverdriveCheckbox == value) return; _showOverdriveCheckbox = value; OnPropertyChanged(); }
-        }
-
         private bool _showProbeUsageDate;
         public bool ShowProbeUsageDate
         {
             get => _showProbeUsageDate;
             set { if (_showProbeUsageDate == value) return; _showProbeUsageDate = value; OnPropertyChanged(); }
-        }
-
-        private bool _useOverrideSpeed;
-        public bool UseOverrideSpeed
-        {
-            get => _useOverrideSpeed;
-            set
-            {
-                if (_useOverrideSpeed == value) return;
-                _useOverrideSpeed = value;
-                OnPropertyChanged();
-                if (_manager.IsConnected)
-                    _manager.SetSpeed(_useOverrideSpeed);
-            }
         }
 
         private int _progress;
@@ -164,19 +109,15 @@ namespace OneWire.UI.Wpf.ViewModels
 
         public MainViewModel(IFileDialogService fileDialogService, IEepromDataManager manager)
         {
-            _selectedAdapterType = GetAppSettingAdapterType("AdapterType", AdapterType.DS9490);
-            RefreshAvailablePorts();
-            SelectedPort = _selectedAdapterType == AdapterType.DS9490
-                ? "USB1"
-                : AvailablePorts.FirstOrDefault() ?? string.Empty;
             AllowEditIdentification = GetAppSettingBool("AllowEditIdentification", defaultValue: true);
             AllowEditCalibration = GetAppSettingBool("AllowEditCalibration", defaultValue: true);
-            ShowOverdriveCheckbox = GetAppSettingBool("ShowOverdriveCheckbox", defaultValue: false);
             _showProbeUsageDate = GetAppSettingBool("ShowProbeUsageDate", defaultValue: true);
             _eraseFillByte = GetAppSettingByte("EraseFillByte", 0x00);
 
             _fileDialogService = fileDialogService;
             _manager = manager;
+            Connectivity = new ConnectivityViewModel(_manager, OnPortDisconnected);
+            Connectivity.PropertyChanged += OnConnectivityPropertyChanged;
 
             _eeprom = new EepromData();
             Identification = new IdentificationViewModel(_eeprom.Id);
@@ -184,7 +125,6 @@ namespace OneWire.UI.Wpf.ViewModels
             User = new UserDataViewModel(_eeprom.User);
             User.Schema = GetAppSettingUShort("UserDataVersion", 1);
 
-            TogglePortCommand = new RelayCommand(TogglePort);
             _readEepromCommand = new RelayCommand(async () => await LoadMemoryAsync(), CanStartOperation);
             _writeEepromCommand = new RelayCommand(async () => await WriteMemoryAsync(), CanStartOperation);
             _eraseEepromCommand = new RelayCommand(async () => await EraseMemoryAsync(), CanStartOperation);
@@ -196,7 +136,6 @@ namespace OneWire.UI.Wpf.ViewModels
             SaveJsonCommand = new RelayCommand(SaveJson);
             ExportHexCommand = new RelayCommand(ExportHex);
             SaveRawTxtCommand = new RelayCommand(SaveRawTxt);
-            RefreshPortsCommand = new RelayCommand(RefreshAvailablePorts);
             ExitCommand = new RelayCommand(() => Application.Current.Shutdown());
 
             _selectedWriteMode = WriteMode.UserDataOnly;
@@ -205,40 +144,10 @@ namespace OneWire.UI.Wpf.ViewModels
 
         public void OnAppClosing()
         {
-            _manager.Close();
+            Connectivity.Close();
         }
 
         #region Commands
-
-        private void TogglePort()
-        {
-            if (IsPortOpen)
-            {
-                _manager.Close();
-                IsPortOpen = false;
-                ClearUiState();
-                ClearRawDataView();
-            }
-            else if (!string.IsNullOrEmpty(SelectedPort))
-            {
-                try
-                {
-                    var adapter = OneWireAdapterFactory.Create(SelectedAdapterType, SelectedPort);
-                    _manager.Open(adapter);
-                    IsPortOpen = true;
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex, "Failed to connect to 1-Wire adapter.");
-                    MessageBox.Show(
-                        "1-Wire adapter not available. Connect the USB adapter and try again.",
-                        "Connection Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
-                    IsPortOpen = false;
-                }
-            }
-        }
 
         private async Task LoadMemoryAsync()
         {
@@ -370,7 +279,7 @@ namespace OneWire.UI.Wpf.ViewModels
 
         #region Helpers
 
-        private bool CanStartOperation() => IsPortOpen && !IsBusy;
+        private bool CanStartOperation() => Connectivity.IsPortOpen && !IsBusy;
 
         private string BuildDefaultFileName()
         {
@@ -435,24 +344,20 @@ namespace OneWire.UI.Wpf.ViewModels
 
         private void ClearRawDataView() => HexAsciiText = string.Empty;
 
-        private void RefreshAvailablePorts()
+        private void OnPortDisconnected()
         {
-            switch (_selectedAdapterType)
-            {
-                case AdapterType.DS9490:
-                    //AvailablePorts = new[] { "USB1", "USB2", "USB3", "USB4" };
-                    AvailablePorts = new[] { "USB1" };
-                    break;
-                case AdapterType.Mock:
-                    AvailablePorts = Array.Empty<string>();
-                    break;
-                default:
-                    var detected = SerialPortDetector.AutoDetectActiveSerialPorts() ?? Array.Empty<string>();
-                    AvailablePorts = detected
-                        .Select(s => { var i = s.IndexOf(':'); return i > 0 ? s.Substring(0, i).Trim() : s.Trim(); })
-                        .ToArray();
-                    break;
-            }
+            ClearUiState();
+            ClearRawDataView();
+        }
+
+        private void OnConnectivityPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(ConnectivityViewModel.IsPortOpen))
+                return;
+
+            _readEepromCommand?.RaiseCanExecuteChanged();
+            _writeEepromCommand?.RaiseCanExecuteChanged();
+            _eraseEepromCommand?.RaiseCanExecuteChanged();
         }
 
         private static bool GetAppSettingBool(string key, bool defaultValue)
@@ -481,12 +386,6 @@ namespace OneWire.UI.Wpf.ViewModels
                 ushort.TryParse(raw.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hex))
                 return hex;
             return ushort.TryParse(raw, out var v) ? v : defaultValue;
-        }
-
-        private static AdapterType GetAppSettingAdapterType(string key, AdapterType defaultValue)
-        {
-            var raw = ConfigurationManager.AppSettings[key];
-            return Enum.TryParse<AdapterType>(raw, ignoreCase: true, out var v) ? v : defaultValue;
         }
 
         #endregion

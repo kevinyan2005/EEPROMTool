@@ -7,7 +7,7 @@
              xmlns:converters="clr-namespace:OneWire.UI.Wpf.Converters"
              xmlns:fa="http://schemas.fontawesome.io/icons/"
              mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="950">
     <UserControl.Resources>
         <converters:InverseBooleanConverter x:Key="InverseBoolConverter" />
         <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
@@ -16,77 +16,17 @@
     <Grid>
         <StackPanel>
             <StackPanel Orientation="Horizontal">
-                <GroupBox Header="Connectivity" Padding="0,6,0,3" Margin="3,0,0,0">
-                    <StackPanel Orientation="Horizontal">
-                        <Label Content="Adapter:" VerticalContentAlignment="Center"/>
-                        <TextBox Text="{Binding SelectedAdapterType, Mode=OneWay, Converter={StaticResource EnumDescriptionConverter}}"
-                                 IsReadOnly="True" VerticalAlignment="Center" Height="25" VerticalContentAlignment="Center"
-                                 MinWidth="130" Margin="2,0,0,0"/>
-                        <Label Content="Port:" VerticalContentAlignment="Center" Margin="2,0,0,0"
-                               Visibility="{Binding IsPortRequired, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        <ComboBox IsEditable="True"
-                                  MinWidth="80"
-                                  VerticalContentAlignment="Center"
-                                  ItemsSource="{Binding AvailablePorts}"
-                                  Text="{Binding SelectedPort, UpdateSourceTrigger=PropertyChanged}"
-                                  IsEnabled="{Binding IsPortOpen, Converter={StaticResource InverseBoolConverter}}"
-                                  Visibility="{Binding IsPortRequired, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        <Label Content=""></Label>
-
-                        <Button Width="28"
-                                Height="28"
-                                Padding="0"
-                                Margin="0"
-                                ToolTip="Refresh serial ports"
-                                Command="{Binding RefreshPortsCommand}"
-                                Visibility="{Binding IsPortRequired, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                AutomationProperties.AutomationId="RefreshSerialPortsButton">
-                            <fa:ImageAwesome Icon="Refresh"
-                                             Width="16"
-                                             Height="16"
-                                             Foreground="#FF1A1A1A"/>
-                        </Button>
-
-                        <Label Content=""></Label>
-
-                        <ToggleButton Command="{Binding TogglePortCommand}" Width="90">
-                            <ToggleButton.Style>
-                                <Style TargetType="ToggleButton">
-                                    <Setter Property="Content" Value="Connect" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsPortOpen}" Value="true">
-                                            <Setter Property="Content" Value="Disconnect" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ToggleButton.Style>
-                        </ToggleButton>
-                        <Ellipse Width="16" Height="16" Stroke="Black" StrokeThickness="1" Margin="10,0,0,0"
-                                 VerticalAlignment="Center">
-                            <Ellipse.Style>
-                                <Style TargetType="Ellipse">
-                                    <Setter Property="Fill" Value="Gray" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsPortOpen}" Value="true">
-                                            <Setter Property="Fill" Value="LimeGreen" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Ellipse.Style>
-                        </Ellipse>
-                        <Label Content=" "></Label>
-                    </StackPanel>
-                </GroupBox>
-                <GroupBox Header="EEPROM Read/Write Operation" IsEnabled="{Binding IsPortOpen}" Padding="0,6,0,3"
+                <local:ConnectivityView DataContext="{Binding Connectivity}" />
+                <GroupBox Header="EEPROM Read/Write Operation" IsEnabled="{Binding Connectivity.IsPortOpen}" Padding="0,6,0,3"
                           Margin="5,0,0,0">
                     <StackPanel Orientation="Horizontal">
                         <CheckBox Content="Override Speed" VerticalAlignment="Center"
-                                  IsChecked="{Binding UseOverrideSpeed}"
-                                  Visibility="{Binding ShowOverdriveCheckbox, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                  IsChecked="{Binding Connectivity.UseOverrideSpeed}"
+                                  Visibility="{Binding Connectivity.ShowOverdriveCheckbox, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         <Label Content=" "></Label>
                         <Button Width="55" Content="Read" Command="{Binding ReadEepromCommand}"></Button>
-                        <Label Content="    "></Label>
-                        <ComboBox Width="120"
+                        <Label Content="  "></Label>
+                        <ComboBox Width="130"
                                   ItemsSource="{Binding WriteModes}"
                                   SelectedItem="{Binding SelectedWriteMode, Mode=TwoWay}">
                             <ComboBox.ItemTemplate>
@@ -96,7 +36,7 @@
                             </ComboBox.ItemTemplate>
                         </ComboBox>
                         <Label Content=""></Label>
-                        <Button Width="55" Content="Write" Command="{Binding WriteEepromCommand}"></Button>
+                        <Button Width="55" Content="Write" Command="{Binding WriteEepromCommand}" Margin="0,0,5,0"/>
                     </StackPanel>
                 </GroupBox>
             </StackPanel>
@@ -255,14 +195,8 @@
                                        Visibility="{Binding User.HasProbeLength, Converter={StaticResource BooleanToVisibilityConverter}}" />
                             <ComboBox MinWidth="50"
                                       Visibility="{Binding User.HasProbeLength, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                      SelectedValue="{Binding User.ProbeLength, Mode=TwoWay}"
-                                      SelectedValuePath="Content">
-                                <ComboBoxItem>00</ComboBoxItem>
-                                <ComboBoxItem>000</ComboBoxItem>
-                                <ComboBoxItem>1</ComboBoxItem>
-                                <ComboBoxItem>2</ComboBoxItem>
-                                <ComboBoxItem>5</ComboBoxItem>
-                            </ComboBox>
+                                      ItemsSource="{Binding User.AvailableProbeLengths}"
+                                      SelectedItem="{Binding User.ProbeLength, Mode=TwoWay}" />
                             <TextBlock Text=" - " VerticalAlignment="Center" />
                             <TextBlock Text="M" VerticalAlignment="Center" />
                             <TextBox MinWidth="35"
@@ -318,7 +252,7 @@
         </StackPanel>
 
         <Grid Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
-              Background="#77000000">
+              Background="#77000000" Margin="1015,28,-1015,-28">
             <Border Width="320"
                     Padding="16"
                     Background="White"

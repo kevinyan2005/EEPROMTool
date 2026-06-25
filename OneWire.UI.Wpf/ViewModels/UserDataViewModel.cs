@@ -21,6 +21,7 @@ namespace OneWire.UI.Wpf.ViewModels
 
         private const int LotRequiredLen = 4;
         private const int SequenceRequiredLen = 2;
+        private static readonly string[] ProbeLengthOptions = { "00", "000", "1", "2" };
 
         public UserDataViewModel(UserDefinedBlock model)
             : this(model, false) { }
@@ -160,6 +161,9 @@ namespace OneWire.UI.Wpf.ViewModels
 
         public ObservableCollection<ProbeTypeEnum> AvailableProbes { get; } =
             new ObservableCollection<ProbeTypeEnum>(Enum.GetValues(typeof(ProbeTypeEnum)).Cast<ProbeTypeEnum>());
+
+        public ObservableCollection<string> AvailableProbeLengths { get; } =
+            new ObservableCollection<string>(ProbeLengthOptions);
 
         // Not included for CRC check
         public DateTime? ProbeUsageDate
