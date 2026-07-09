@@ -304,7 +304,7 @@ namespace OneWire.UI.Wpf.ViewModels
 
         private void LoadJson()
         {
-            var path = _fileDialogService.OpenFile("JSON files|*.json");
+            var path = _fileDialogService.OpenFile("JSON files|*.json", InputFilesDirectory);
             if (path == null) return;
 
             _eeprom = _manager.LoadFromJson(path);
@@ -321,14 +321,14 @@ namespace OneWire.UI.Wpf.ViewModels
 
         private void SaveJson()
         {
-            var path = _fileDialogService.SaveFile("JSON files|*.json", BuildDefaultFileName());
+            var path = _fileDialogService.SaveFile("JSON files|*.json", BuildDefaultFileName(), OutputFilesDirectory);
             if (path == null) return;
             _manager.SaveToJson(_eeprom, path);
         }
 
         private void LoadRawTxt()
         {
-            var path = _fileDialogService.OpenFile("Text files|*.txt");
+            var path = _fileDialogService.OpenFile("Text files|*.txt", InputFilesDirectory);
             if (path == null) return;
 
             try
@@ -351,7 +351,7 @@ namespace OneWire.UI.Wpf.ViewModels
 
         private void SaveRawTxt()
         {
-            var path = _fileDialogService.SaveFile("Text files|*.txt", BuildDefaultFileName());
+            var path = _fileDialogService.SaveFile("Text files|*.txt", BuildDefaultFileName(), OutputFilesDirectory);
             if (path == null) return;
             var data = _rawEepromBytes != null && _rawEepromBytes.Length > 0
                 ? _rawEepromBytes
@@ -361,7 +361,7 @@ namespace OneWire.UI.Wpf.ViewModels
 
         private void ExportHex()
         {
-            var path = _fileDialogService.SaveFile("Text files|*.txt", "hex_dump_" + BuildDefaultFileName());
+            var path = _fileDialogService.SaveFile("Text files|*.txt", "hex_dump_" + BuildDefaultFileName(), OutputFilesDirectory);
             if (path == null) return;
             File.WriteAllText(path, HexAsciiText ?? string.Empty);
         }
@@ -371,6 +371,17 @@ namespace OneWire.UI.Wpf.ViewModels
         #region Helpers
 
         private bool CanStartOperation() => IsPortOpen && !IsBusy;
+
+        private static string GetAppSubDirectory(string name)
+        {
+            var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, name);
+            Directory.CreateDirectory(dir);
+            return dir;
+        }
+
+        private static string InputFilesDirectory => GetAppSubDirectory("InputFiles");
+
+        private static string OutputFilesDirectory => GetAppSubDirectory("OutputFiles");
 
         private string BuildDefaultFileName()
         {
