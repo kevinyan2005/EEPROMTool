@@ -1,0 +1,30 @@
+{
+  "Id": {
+    "DataVersion": 1,
+    "DataId": "01",
+    "Model": "DS2431",
+    "SerialNumber": "SN00042",
+    "Crc16": 60154
+  },
+  "Calibration": {
+    "GaugeFactors": [
+      2000,
+      2000,
+      2000,
+      2000
+    ],
+    "ReferenceValue": 4294967295,
+    "ManufactureDate": "2026-01-15T00:00:00",
+    "ExpiryDate": "2028-01-15T00:00:00",
+    "GaugeType": "A1",
+    "Crc16": 47402
+  },
+  "User": {
+    "Schema": 1,
+    "ProbeSerialNumber": "FF33-33-A001-0007",
+    "ProbeExpiryDate": "2028-01-15T00:00:00",
+    "Crc16": 14290,
+    "ProbeUsageDate": "9999-12-31T23:59:59",
+    "ProbeManufactureDate": "2026-01-15T00:00:00"
+  }
+}
