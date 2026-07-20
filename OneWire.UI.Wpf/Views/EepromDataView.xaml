@@ -83,8 +83,12 @@
                                  IsReadOnly="{Binding AllowEditIdentification, Converter={StaticResource InverseBoolConverter}}" />
 
                         <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:" />
-                        <TextBlock Grid.Row="8" Grid.Column="2"
-                                   Text="{Binding Identification.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue='', Mode=OneWay}" />
+                        <StackPanel Grid.Row="8" Grid.Column="2" Orientation="Horizontal">
+                            <TextBlock Text="{Binding Identification.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue='', Mode=OneWay}"
+                                       VerticalAlignment="Center" />
+                            <CheckBox Content="Check CRC" Margin="8,0,0,0" VerticalAlignment="Center"
+                                      IsChecked="{Binding CheckIdentificationCrc}" />
+                        </StackPanel>
 
                     </Grid>
                 </GroupBox>
@@ -130,8 +134,12 @@
                                      IsReadOnly="{Binding AllowEditCalibration, Converter={StaticResource InverseBoolConverter}}" />
 
                             <TextBlock Grid.Row="8" Grid.Column="0" Text="Checksum:" />
-                            <TextBlock Grid.Row="8" Grid.Column="2"
-                                       Text="{Binding Calibration.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
+                            <StackPanel Grid.Row="8" Grid.Column="2" Orientation="Horizontal">
+                                <TextBlock Text="{Binding Calibration.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                                           VerticalAlignment="Center" />
+                                <CheckBox Content="Check CRC" Margin="8,0,0,0" VerticalAlignment="Center"
+                                          IsChecked="{Binding CheckCalibrationCrc}" />
+                            </StackPanel>
 
                         </Grid>
                         <StackPanel Width="8"></StackPanel>
@@ -225,8 +233,12 @@
                                  Text="{Binding User.ProbeUsageDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}"
                                  IsReadOnly="True"
                                  Visibility="{Binding ShowProbeUsageDate, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <TextBlock Grid.Row="12" Grid.Column="2"
-                                   Text="{Binding User.Crc, StringFormat={}{0:X4}, TargetNullValue=''}" />
+                        <StackPanel Grid.Row="12" Grid.Column="2" Orientation="Horizontal">
+                            <TextBlock Text="{Binding User.Crc, StringFormat={}{0:X4}, TargetNullValue=''}"
+                                       VerticalAlignment="Center" />
+                            <CheckBox Content="Check CRC" Margin="8,0,0,0" VerticalAlignment="Center"
+                                      IsChecked="{Binding CheckUserCrc}" />
+                        </StackPanel>
                     </Grid>
                 </GroupBox>
 

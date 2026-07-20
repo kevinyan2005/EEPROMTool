@@ -15,7 +15,7 @@ namespace OneWire.Core
         Task<byte[]> ReadRawAsync(IProgress<int> progress = null);
         Task<byte[]> WriteAsync(EepromData data, WriteMode mode, byte eraseFillByte = 0x00, IProgress<int> progress = null);
 
-        EepromData Decode(byte[] rawBytes);
+        EepromData Decode(byte[] rawBytes, CrcCheckOptions crcCheckOptions = null);
         byte[] Encode(EepromData data);
 
         EepromData LoadFromJson(string path);

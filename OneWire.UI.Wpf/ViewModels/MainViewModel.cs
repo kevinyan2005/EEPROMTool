@@ -78,6 +78,27 @@ namespace OneWire.UI.Wpf.ViewModels
             set { if (_showProbeUsageDate == value) return; _showProbeUsageDate = value; OnPropertyChanged(); }
         }
 
+        private bool _checkIdentificationCrc = true;
+        public bool CheckIdentificationCrc
+        {
+            get => _checkIdentificationCrc;
+            set { if (_checkIdentificationCrc == value) return; _checkIdentificationCrc = value; OnPropertyChanged(); }
+        }
+
+        private bool _checkCalibrationCrc = true;
+        public bool CheckCalibrationCrc
+        {
+            get => _checkCalibrationCrc;
+            set { if (_checkCalibrationCrc == value) return; _checkCalibrationCrc = value; OnPropertyChanged(); }
+        }
+
+        private bool _checkUserCrc = true;
+        public bool CheckUserCrc
+        {
+            get => _checkUserCrc;
+            set { if (_checkUserCrc == value) return; _checkUserCrc = value; OnPropertyChanged(); }
+        }
+
         private int _progress;
         public int Progress
         {
@@ -309,25 +330,30 @@ namespace OneWire.UI.Wpf.ViewModels
             ParseEeprom(bytes);
         }
 
+        private CrcCheckOptions BuildCrcCheckOptions() => new CrcCheckOptions
+        {
+            CheckIdentification = CheckIdentificationCrc,
+            CheckCalibration = CheckCalibrationCrc,
+            CheckUser = CheckUserCrc
+        };
+
         private void ParseEeprom(byte[] raw)
         {
             try
             {
-                _eeprom = _manager.Decode(raw);
-
-                Identification = new IdentificationViewModel(_eeprom.Id, loadFromData: true);
-                Calibration    = new CalibrationViewModel(_eeprom.Calibration, loadFromData: true);
-                User           = new UserDataViewModel(_eeprom.User, loadFromData: true);
-
-                OnPropertyChanged(nameof(Identification));
-                OnPropertyChanged(nameof(Calibration));
-                OnPropertyChanged(nameof(User));
+                _eeprom = _manager.Decode(raw, BuildCrcCheckOptions());
+                ApplyEepromToViewModels();
             }
-            catch (InvalidDataException ex)
+            catch (CrcValidationException ex)
             {
+                // Fields are still fully parsed even though CRC validation failed for one or more
+                // sections, so keep showing the parsed data instead of discarding it.
+                _eeprom = ex.EepromData;
+                ApplyEepromToViewModels();
+
                 Logger.Error($"CRC validation failed: {ex.Message}");
                 MessageBox.Show(
-                    $"{ex.Message}\n\n See raw data in the HEX view.",
+                    $"{ex.Message}\n\n Data has still been loaded; verify the affected section(s) before use.",
                     "CRC Validation Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -337,6 +363,17 @@ namespace OneWire.UI.Wpf.ViewModels
                 Logger.Error($"Failed to parse EEPROM data: {ex.Message}");
                 throw;
             }
+        }
+
+        private void ApplyEepromToViewModels()
+        {
+            Identification = new IdentificationViewModel(_eeprom.Id, loadFromData: true);
+            Calibration    = new CalibrationViewModel(_eeprom.Calibration, loadFromData: true);
+            User           = new UserDataViewModel(_eeprom.User, loadFromData: true);
+
+            OnPropertyChanged(nameof(Identification));
+            OnPropertyChanged(nameof(Calibration));
+            OnPropertyChanged(nameof(User));
         }
 
         private void ClearUiState()

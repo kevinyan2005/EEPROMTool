@@ -58,7 +58,7 @@ namespace OneWire.Core
             return await _adapter.ReadEntireMemoryAsync(_useOverdrive);
         }
 
-        public EepromData Decode(byte[] rawBytes) => _serializer.Decode(rawBytes);
+        public EepromData Decode(byte[] rawBytes, CrcCheckOptions crcCheckOptions = null) => _serializer.Decode(rawBytes, crcCheckOptions);
         public byte[] Encode(EepromData data) => _serializer.Encode(data);
         public EepromData LoadFromJson(string path) => _fileService.LoadFromJson(path);
         public void SaveToJson(EepromData data, string path) => _fileService.SaveToJson(data, path);

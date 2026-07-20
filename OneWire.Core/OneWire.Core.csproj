@@ -50,6 +50,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CrcCheckOptions.cs" />
+    <Compile Include="CrcValidationException.cs" />
     <Compile Include="EepromData.cs" />
     <Compile Include="EepromDataManager.cs" />
     <Compile Include="EepromFileService.cs" />
