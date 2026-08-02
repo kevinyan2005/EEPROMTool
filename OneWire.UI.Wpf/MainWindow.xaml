@@ -35,9 +35,16 @@
             <views:EepromDataView/>
         </StackPanel>
 
-        <nlogViewer:NlogViewer x:Name="logCtrl" MinHeight="300" TimeWidth="auto" LoggerNameWidth="auto"
-                               LevelWidth="auto"
-                               ExceptionWidth="auto" MessageWidth="450" FontSize="11" />
+        <TabControl x:Name="MonitoringTabControl" SelectedIndex="0" MinHeight="300">
+            <TabItem Header="History">
+                <views:OperationHistoryView />
+            </TabItem>
+            <TabItem Header="Log">
+                <nlogViewer:NlogViewer x:Name="logCtrl" TimeWidth="auto" LoggerNameWidth="auto"
+                                       LevelWidth="auto"
+                                       ExceptionWidth="auto" MessageWidth="450" FontSize="11" />
+            </TabItem>
+        </TabControl>
     </DockPanel>
 
 </Window>
