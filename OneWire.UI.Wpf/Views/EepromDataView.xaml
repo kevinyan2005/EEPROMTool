@@ -277,7 +277,7 @@
         </StackPanel>
 
         <Grid Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
-              Background="#77000000" Margin="1015,28,-1015,-28">
+              Background="#77000000" Margin="0,22,0,-22">
             <Border Width="320"
                     Padding="16"
                     Background="White"

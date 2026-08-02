@@ -219,7 +219,68 @@ namespace OneWire.UI.Wpf.ViewModels
             if (dialog.ShowDialog() != true) return;
 
             var operationName = mode == WriteMode.UserDataOnly ? "Write User Data" : "Write Entire EEPROM";
-            await WriteMemoryTrackedAsync(mode, operationName);
+            await ProgramNextSequenceAsync(mode, operationName);
+        }
+
+        /// <summary>
+        /// Writes the current EEPROM data, then repeatedly offers to program the next unit in
+        /// sequence (incrementing the serial number) for production-line style batch programming.
+        /// </summary>
+        private async Task ProgramNextSequenceAsync(WriteMode mode, string operationName)
+        {
+            while (true)
+            {
+                var success = await WriteMemoryTrackedAsync(mode, operationName);
+                if (!success) return;
+
+                var promptDialog = new ProgramNextEepromDialog
+                {
+                    Owner = Application.Current?.MainWindow
+                };
+
+                if (promptDialog.ShowDialog() != true) return;
+
+                if (!TryAdvanceToNextSerialNumber())
+                {
+                    MessageBox.Show(
+                        "Could not advance to the next serial number automatically (the sequence may be invalid or at its maximum value). Update it manually before writing again.",
+                        "Program Next EEPROM",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (!CanStartOperation())
+                {
+                    MessageBox.Show(
+                        "The device is no longer connected. Reconnect and write manually to continue programming.",
+                        "Program Next EEPROM",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Increments the last (sequence) segment of the probe serial number. Setting
+        /// <see cref="UserDataViewModel.Sequence"/> updates the in-memory EEPROM image, refreshes
+        /// all dependent serial-number UI fields, and recalculates/redisplays the User Data CRC.
+        /// </summary>
+        private bool TryAdvanceToNextSerialNumber()
+        {
+            var currentSequence = User.Sequence;
+            if (!int.TryParse(currentSequence, out var sequenceNumber))
+                return false;
+
+            var nextSequence = (sequenceNumber + 1).ToString("00", CultureInfo.InvariantCulture);
+            if (nextSequence.Length != currentSequence.Length)
+                return false; // overflowed the fixed-width sequence segment
+
+            User.Sequence = nextSequence;
+
+            // Validate the updated User Data before allowing the next write to proceed.
+            return User["Sequence"] == null && User["LotNumber"] == null;
         }
 
         private async Task EraseMemoryAsync()
@@ -237,11 +298,12 @@ namespace OneWire.UI.Wpf.ViewModels
             await WriteMemoryTrackedAsync(WriteMode.Erase, "Format EEPROM");
         }
 
-        private async Task WriteMemoryTrackedAsync(WriteMode mode, string operationName)
+        private async Task<bool> WriteMemoryTrackedAsync(WriteMode mode, string operationName)
         {
             IsBusy = true;
             var stopwatch = Stopwatch.StartNew();
             var result = "Success";
+            var success = true;
             try
             {
                 await ExecuteWriteAsync(mode);
@@ -249,8 +311,13 @@ namespace OneWire.UI.Wpf.ViewModels
             catch (Exception ex)
             {
                 result = $"Failed: {ex.Message}";
+                success = false;
                 Logger.Error(ex, $"{operationName} failed.");
-                throw;
+                MessageBox.Show(
+                    $"{operationName} failed: {ex.Message}",
+                    "Write Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
             finally
             {
@@ -258,6 +325,7 @@ namespace OneWire.UI.Wpf.ViewModels
                 History.Add(operationName, BuildDeviceLabel(), result, stopwatch.Elapsed);
                 IsBusy = false;
             }
+            return success;
         }
 
         private async Task ExecuteWriteAsync(WriteMode mode)

@@ -1,10 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(rm -rf \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/logs\" \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/HistoryTest2.exe\" \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/HistoryTest.exe\" 2>/dev/null; echo done)"
+      "Bash(rm -rf \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/logs\" \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/HistoryTest2.exe\" \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/HistoryTest.exe\" 2>/dev/null; echo done)",
+      "Bash(powershell -NoProfile -Command \"Get-Process -Name 'OneWire.UI.Wpf' -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, StartTime\")",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 7844 -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Get-Process -Id 7844 -ErrorAction SilentlyContinue\")",
+      "Bash(rm -f \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/ProgramNextTest.exe\" \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/HistoryTest.cs\" 2>/dev/null; echo done)",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 15648 -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Get-Process -Id 15648 -ErrorAction SilentlyContinue\")",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 1500 -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Get-Process -Id 1500 -ErrorAction SilentlyContinue\")",
+      "Bash(cp \"/c/local_depot/techDevelopment/kyan/G4/OneWireEepromTool/OneWire.UI.Wpf/bin/Debug/OneWire.UI.Wpf.exe\" \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/\" *)"
     ],
     "additionalDirectories": [
-      "C:\\Users\\kyan\\AppData\\Local\\Temp\\claude\\c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool\\4096ae1d-b6b0-4631-832d-a2753c4c3af1\\scratchpad\\logs"
+      "C:\\Users\\kyan\\AppData\\Local\\Temp\\claude\\c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool\\4096ae1d-b6b0-4631-832d-a2753c4c3af1\\scratchpad\\logs",
+      "C:\\Users\\kyan\\AppData\\Local\\Temp\\claude\\c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool\\4096ae1d-b6b0-4631-832d-a2753c4c3af1\\scratchpad",
+      "C:\\Users\\kyan\\AppData\\Local\\Temp\\claude\\c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool\\4096ae1d-b6b0-4631-832d-a2753c4c3af1\\scratchpad\\"
     ]
   }
 }

@@ -6,7 +6,7 @@
         xmlns:views="clr-namespace:OneWire.UI.Wpf.Views"
         xmlns:nlogViewer="clr-namespace:NlogViewer;assembly=NlogViewer"
         mc:Ignorable="d"
-        Title="1-Wire EEPROM Test Tool" Height="820" Width="950">
+        Title="1-Wire EEPROM Test Tool" Height="820" Width="975">
     <DockPanel>
         <!-- Menu bar -->
         <Menu DockPanel.Dock="Top">

@@ -119,6 +119,9 @@
     <Compile Include="Views\OperationHistoryView.xaml.cs">
       <DependentUpon>OperationHistoryView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\ProgramNextEepromDialog.xaml.cs">
+      <DependentUpon>ProgramNextEepromDialog.xaml</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -156,6 +159,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ConfirmWriteDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ProgramNextEepromDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

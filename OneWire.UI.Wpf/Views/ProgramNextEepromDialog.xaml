@@ -1,0 +1,85 @@
+<Window x:Class="OneWire.UI.Wpf.Views.ProgramNextEepromDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{Binding DialogTitle}"
+        WindowStartupLocation="CenterOwner"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        Background="#77000000">
+    <Grid>
+        <Border Width="360"
+                Padding="16"
+                Background="White"
+                BorderBrush="#404040"
+                BorderThickness="1"
+                CornerRadius="6"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="16" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Question row: icon + message, with a clear gap between them -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Width="30" Height="30" CornerRadius="15" Background="#FF2F6FED"
+                            VerticalAlignment="Top">
+                        <TextBlock Text="?" Foreground="White" FontSize="16" FontWeight="Bold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding Message}"
+                               Margin="14,0,0,0"
+                               TextWrapping="Wrap"
+                               FontSize="14"
+                               VerticalAlignment="Center" />
+                </Grid>
+
+                <!-- Warning section: separate callout with a yellow exclamation icon -->
+                <Border Grid.Row="2"
+                        Background="#FFFFF3CD"
+                        BorderBrush="#FFE0B300"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="10,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Viewbox Grid.Column="0" Width="22" Height="22" VerticalAlignment="Top">
+                            <Canvas Width="24" Height="24">
+                                <Polygon Points="12,2 22,20 2,20"
+                                         Fill="#FFFFC107" Stroke="#FFB98900" StrokeThickness="0.8"
+                                         StrokeLineJoin="Round" />
+                                <Rectangle Canvas.Left="11" Canvas.Top="8" Width="2" Height="6.5"
+                                           RadiusX="1" RadiusY="1" Fill="#FF3C3C3C" />
+                                <Ellipse Canvas.Left="11" Canvas.Top="16" Width="2" Height="2"
+                                         Fill="#FF3C3C3C" />
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding WarningMessage}"
+                                   Margin="10,0,0,0"
+                                   TextWrapping="Wrap"
+                                   FontSize="13"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Content="No" Width="80" Height="30" IsCancel="True" Margin="0,0,8,0" />
+                    <Button Content="Yes" Width="80" Height="30" IsDefault="True" Click="Yes_Click" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
