@@ -40,6 +40,18 @@
                                         Visibility="{Binding ShowFormatEepromButton, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </StackPanel>
                 </GroupBox>
+
+                <GroupBox Header="EEPROM Image File" Padding="0,6,0,3" Margin="5,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content=" "></Label>
+
+                        <ContentControl Content="{StaticResource LoadRawTxtIconButton}" Focusable="False" />
+
+                        <Label Content=" "></Label>
+
+                        <ContentControl Content="{StaticResource SaveRawTxtIconButton}" Focusable="False" />
+                    </StackPanel>
+                </GroupBox>
             </StackPanel>
 
             <StackPanel Orientation="Horizontal">
