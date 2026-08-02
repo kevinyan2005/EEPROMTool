@@ -26,7 +26,8 @@ namespace OneWire.UI.Wpf.ViewModels
         public UserDataViewModel User { get; private set; }
 
         public ICommand ReadEepromCommand { get; }
-        public ICommand WriteEepromCommand { get; }
+        public ICommand WriteEntireEepromCommand { get; }
+        public ICommand WriteUserDataCommand { get; }
         public ICommand EraseEepromCommand { get; }
         public ICommand LoadJsonCommand { get; }
         public ICommand LoadRawTxtCommand { get; }
@@ -36,26 +37,13 @@ namespace OneWire.UI.Wpf.ViewModels
         public ICommand ExitCommand { get; }
 
         private readonly RelayCommand _readEepromCommand;
-        private readonly RelayCommand _writeEepromCommand;
+        private readonly RelayCommand _writeEntireEepromCommand;
+        private readonly RelayCommand _writeUserDataCommand;
         private readonly RelayCommand _eraseEepromCommand;
 
         private EepromData _eeprom;
         private byte[] _rawEepromBytes;
         private readonly byte _eraseFillByte;
-
-        public WriteMode[] WriteModes { get; } = (WriteMode[])Enum.GetValues(typeof(WriteMode));
-
-        private WriteMode _selectedWriteMode;
-        public WriteMode SelectedWriteMode
-        {
-            get => _selectedWriteMode;
-            set
-            {
-                if (_selectedWriteMode == value) return;
-                _selectedWriteMode = value;
-                OnPropertyChanged();
-            }
-        }
 
         private bool _allowEditIdentification;
         public bool AllowEditIdentification
@@ -123,7 +111,8 @@ namespace OneWire.UI.Wpf.ViewModels
                 _isBusy = value;
                 OnPropertyChanged();
                 _readEepromCommand?.RaiseCanExecuteChanged();
-                _writeEepromCommand?.RaiseCanExecuteChanged();
+                _writeEntireEepromCommand?.RaiseCanExecuteChanged();
+                _writeUserDataCommand?.RaiseCanExecuteChanged();
                 _eraseEepromCommand?.RaiseCanExecuteChanged();
             }
         }
@@ -147,10 +136,12 @@ namespace OneWire.UI.Wpf.ViewModels
             User.Schema = GetAppSettingUShort("UserDataVersion", 1);
 
             _readEepromCommand = new RelayCommand(async () => await LoadMemoryAsync(), CanStartOperation);
-            _writeEepromCommand = new RelayCommand(async () => await WriteMemoryAsync(), CanStartOperation);
+            _writeEntireEepromCommand = new RelayCommand(async () => await WriteMemoryAsync(WriteMode.Entire), CanStartOperation);
+            _writeUserDataCommand = new RelayCommand(async () => await WriteMemoryAsync(WriteMode.UserDataOnly), CanStartOperation);
             _eraseEepromCommand = new RelayCommand(async () => await EraseMemoryAsync(), CanStartOperation);
             ReadEepromCommand = _readEepromCommand;
-            WriteEepromCommand = _writeEepromCommand;
+            WriteEntireEepromCommand = _writeEntireEepromCommand;
+            WriteUserDataCommand = _writeUserDataCommand;
             EraseEepromCommand = _eraseEepromCommand;
             LoadJsonCommand = new RelayCommand(LoadJson);
             LoadRawTxtCommand = new RelayCommand(LoadRawTxt);
@@ -159,7 +150,6 @@ namespace OneWire.UI.Wpf.ViewModels
             SaveRawTxtCommand = new RelayCommand(SaveRawTxt);
             ExitCommand = new RelayCommand(() => Application.Current.Shutdown());
 
-            _selectedWriteMode = WriteMode.UserDataOnly;
             _rawEepromBytes = Array.Empty<byte>();
         }
 
@@ -177,14 +167,11 @@ namespace OneWire.UI.Wpf.ViewModels
             finally { IsBusy = false; }
         }
 
-        private async Task WriteMemoryAsync()
+        private async Task WriteMemoryAsync(WriteMode mode)
         {
-            var (dialogTitle, message) = SelectedWriteMode switch
-            {
-                WriteMode.UserDataOnly => ("Confirm Write", "Proceed with writing user data to EEPROM?"),
-                WriteMode.Erase        => ("Confirm Erase", "Erase the entire EEPROM?"),
-                _                      => ("Confirm Write", "Proceed with writing entire EEPROM?")
-            };
+            var (dialogTitle, message) = mode == WriteMode.UserDataOnly
+                ? ("Confirm Write", "Proceed with writing user data to EEPROM?")
+                : ("Confirm Write", "Proceed with writing entire EEPROM?");
 
             var dialog = new ConfirmWriteDialog
             {
@@ -197,7 +184,7 @@ namespace OneWire.UI.Wpf.ViewModels
             if (dialog.ShowDialog() != true) return;
 
             IsBusy = true;
-            try { await ExecuteWriteAsync(SelectedWriteMode); }
+            try { await ExecuteWriteAsync(mode); }
             finally { IsBusy = false; }
         }
 
@@ -404,7 +391,8 @@ namespace OneWire.UI.Wpf.ViewModels
                 return;
 
             _readEepromCommand?.RaiseCanExecuteChanged();
-            _writeEepromCommand?.RaiseCanExecuteChanged();
+            _writeEntireEepromCommand?.RaiseCanExecuteChanged();
+            _writeUserDataCommand?.RaiseCanExecuteChanged();
             _eraseEepromCommand?.RaiseCanExecuteChanged();
         }
 
