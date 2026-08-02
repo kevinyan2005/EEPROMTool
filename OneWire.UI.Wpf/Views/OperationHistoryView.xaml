@@ -6,17 +6,7 @@
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="900">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
-            <Button Content="Export to CSV" Padding="10,3" Command="{Binding History.ExportCsvCommand}"
-                    AutomationProperties.AutomationId="ExportHistoryCsvButton" />
-        </StackPanel>
-
-        <DataGrid x:Name="HistoryDataGrid" Grid.Row="1"
+        <DataGrid x:Name="HistoryDataGrid"
                   ItemsSource="{Binding History.Entries}"
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
@@ -26,7 +16,7 @@
                   HeadersVisibility="Column"
                   GridLinesVisibility="Horizontal"
                   AlternationCount="2"
-                  Margin="5,0,5,5">
+                  Margin="5">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Timestamp"
                                     Binding="{Binding Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"

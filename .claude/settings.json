@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/logs\" \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/HistoryTest2.exe\" \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/HistoryTest.exe\" 2>/dev/null; echo done)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\kyan\\AppData\\Local\\Temp\\claude\\c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool\\4096ae1d-b6b0-4631-832d-a2753c4c3af1\\scratchpad\\logs"
+    ]
+  }
+}

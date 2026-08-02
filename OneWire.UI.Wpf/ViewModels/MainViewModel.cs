@@ -146,7 +146,7 @@ namespace OneWire.UI.Wpf.ViewModels
             _manager = manager;
             Connectivity = new ConnectivityViewModel(_manager, OnPortDisconnected);
             Connectivity.PropertyChanged += OnConnectivityPropertyChanged;
-            History = new OperationHistoryViewModel(_fileDialogService);
+            History = new OperationHistoryViewModel();
 
             _eeprom = new EepromData();
             Identification = new IdentificationViewModel(_eeprom.Id);
