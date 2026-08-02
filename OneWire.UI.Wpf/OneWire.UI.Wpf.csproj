@@ -100,6 +100,8 @@
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\IFileDialogService.cs" />
     <Compile Include="ViewModels\IdentificationViewModel.cs" />
+    <Compile Include="ViewModels\OperationHistoryEntry.cs" />
+    <Compile Include="ViewModels\OperationHistoryViewModel.cs" />
     <Compile Include="ViewModels\UserDataViewModel.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="Views\ConfirmEraseDialog.xaml.cs">
@@ -113,6 +115,9 @@
     </Compile>
     <Compile Include="Views\EepromDataView.xaml.cs">
       <DependentUpon>EepromDataView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\OperationHistoryView.xaml.cs">
+      <DependentUpon>OperationHistoryView.xaml</DependentUpon>
     </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -135,6 +140,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\EepromDataView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\OperationHistoryView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

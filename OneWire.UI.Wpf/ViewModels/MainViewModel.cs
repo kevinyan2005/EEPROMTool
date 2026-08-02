@@ -1,6 +1,7 @@
 using System;
 using System.Configuration;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ namespace OneWire.UI.Wpf.ViewModels
         public IdentificationViewModel Identification { get; private set; }
         public CalibrationViewModel Calibration { get; private set; }
         public UserDataViewModel User { get; private set; }
+        public OperationHistoryViewModel History { get; }
 
         public ICommand ReadEepromCommand { get; }
         public ICommand WriteEntireEepromCommand { get; }
@@ -144,6 +146,7 @@ namespace OneWire.UI.Wpf.ViewModels
             _manager = manager;
             Connectivity = new ConnectivityViewModel(_manager, OnPortDisconnected);
             Connectivity.PropertyChanged += OnConnectivityPropertyChanged;
+            History = new OperationHistoryViewModel(_fileDialogService);
 
             _eeprom = new EepromData();
             Identification = new IdentificationViewModel(_eeprom.Id);
@@ -179,8 +182,24 @@ namespace OneWire.UI.Wpf.ViewModels
         private async Task LoadMemoryAsync()
         {
             IsBusy = true;
-            try { await ReadEepromInternalAsync(); }
-            finally { IsBusy = false; }
+            var stopwatch = Stopwatch.StartNew();
+            var result = "Success";
+            try
+            {
+                await ReadEepromInternalAsync();
+            }
+            catch (Exception ex)
+            {
+                result = $"Failed: {ex.Message}";
+                Logger.Error(ex, "Read EEPROM failed.");
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                History.Add("Read EEPROM", BuildDeviceLabel(), result, stopwatch.Elapsed);
+                IsBusy = false;
+            }
         }
 
         private async Task WriteMemoryAsync(WriteMode mode)
@@ -199,9 +218,8 @@ namespace OneWire.UI.Wpf.ViewModels
 
             if (dialog.ShowDialog() != true) return;
 
-            IsBusy = true;
-            try { await ExecuteWriteAsync(mode); }
-            finally { IsBusy = false; }
+            var operationName = mode == WriteMode.UserDataOnly ? "Write User Data" : "Write Entire EEPROM";
+            await WriteMemoryTrackedAsync(mode, operationName);
         }
 
         private async Task EraseMemoryAsync()
@@ -216,9 +234,30 @@ namespace OneWire.UI.Wpf.ViewModels
 
             if (dialog.ShowDialog() != true) return;
 
+            await WriteMemoryTrackedAsync(WriteMode.Erase, "Format EEPROM");
+        }
+
+        private async Task WriteMemoryTrackedAsync(WriteMode mode, string operationName)
+        {
             IsBusy = true;
-            try { await ExecuteWriteAsync(WriteMode.Erase); }
-            finally { IsBusy = false; }
+            var stopwatch = Stopwatch.StartNew();
+            var result = "Success";
+            try
+            {
+                await ExecuteWriteAsync(mode);
+            }
+            catch (Exception ex)
+            {
+                result = $"Failed: {ex.Message}";
+                Logger.Error(ex, $"{operationName} failed.");
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                History.Add(operationName, BuildDeviceLabel(), result, stopwatch.Elapsed);
+                IsBusy = false;
+            }
         }
 
         private async Task ExecuteWriteAsync(WriteMode mode)
@@ -240,23 +279,56 @@ namespace OneWire.UI.Wpf.ViewModels
             var path = _fileDialogService.OpenFile("JSON files|*.json", InputFilesDirectory);
             if (path == null) return;
 
-            _eeprom = _manager.LoadFromJson(path);
-            _rawEepromBytes = _manager.Encode(_eeprom);
+            var stopwatch = Stopwatch.StartNew();
+            var result = "Success";
+            try
+            {
+                _eeprom = _manager.LoadFromJson(path);
+                _rawEepromBytes = _manager.Encode(_eeprom);
 
-            Identification = new IdentificationViewModel(_eeprom.Id, loadFromData: true);
-            Calibration = new CalibrationViewModel(_eeprom.Calibration, loadFromData: true);
-            User = new UserDataViewModel(_eeprom.User, loadFromData: true);
+                Identification = new IdentificationViewModel(_eeprom.Id, loadFromData: true);
+                Calibration = new CalibrationViewModel(_eeprom.Calibration, loadFromData: true);
+                User = new UserDataViewModel(_eeprom.User, loadFromData: true);
 
-            OnPropertyChanged(nameof(Identification));
-            OnPropertyChanged(nameof(Calibration));
-            OnPropertyChanged(nameof(User));
+                OnPropertyChanged(nameof(Identification));
+                OnPropertyChanged(nameof(Calibration));
+                OnPropertyChanged(nameof(User));
+            }
+            catch (Exception ex)
+            {
+                result = $"Failed: {ex.Message}";
+                Logger.Error(ex, "Failed to load EEPROM JSON file.");
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                History.Add("Load Image (JSON)", BuildDeviceLabel(), result, stopwatch.Elapsed);
+            }
         }
 
         private void SaveJson()
         {
             var path = _fileDialogService.SaveFile("JSON files|*.json", BuildDefaultFileName(), OutputFilesDirectory);
             if (path == null) return;
-            _manager.SaveToJson(_eeprom, path);
+
+            var stopwatch = Stopwatch.StartNew();
+            var result = "Success";
+            try
+            {
+                _manager.SaveToJson(_eeprom, path);
+            }
+            catch (Exception ex)
+            {
+                result = $"Failed: {ex.Message}";
+                Logger.Error(ex, "Failed to save EEPROM JSON file.");
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                History.Add("Save Image (JSON)", BuildDeviceLabel(), result, stopwatch.Elapsed);
+            }
         }
 
         private void LoadRawTxt()
@@ -264,6 +336,8 @@ namespace OneWire.UI.Wpf.ViewModels
             var path = _fileDialogService.OpenFile("Text files|*.txt", InputFilesDirectory);
             if (path == null) return;
 
+            var stopwatch = Stopwatch.StartNew();
+            var result = "Success";
             try
             {
                 var bytes = _manager.LoadRawHex(path);
@@ -273,6 +347,7 @@ namespace OneWire.UI.Wpf.ViewModels
             }
             catch (Exception ex)
             {
+                result = $"Failed: {ex.Message}";
                 Logger.Error(ex, "Failed to load raw EEPROM text file.");
                 MessageBox.Show(
                     "The selected file does not contain valid EEPROM raw hex data.",
@@ -280,16 +355,38 @@ namespace OneWire.UI.Wpf.ViewModels
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
+            finally
+            {
+                stopwatch.Stop();
+                History.Add("Load Image (RAW)", BuildDeviceLabel(), result, stopwatch.Elapsed);
+            }
         }
 
         private void SaveRawTxt()
         {
             var path = _fileDialogService.SaveFile("Text files|*.txt", BuildDefaultFileName(), OutputFilesDirectory);
             if (path == null) return;
-            var data = _rawEepromBytes != null && _rawEepromBytes.Length > 0
-                ? _rawEepromBytes
-                : _manager.Encode(_eeprom);
-            _manager.SaveRawHex(data, path);
+
+            var stopwatch = Stopwatch.StartNew();
+            var result = "Success";
+            try
+            {
+                var data = _rawEepromBytes != null && _rawEepromBytes.Length > 0
+                    ? _rawEepromBytes
+                    : _manager.Encode(_eeprom);
+                _manager.SaveRawHex(data, path);
+            }
+            catch (Exception ex)
+            {
+                result = $"Failed: {ex.Message}";
+                Logger.Error(ex, "Failed to save raw EEPROM text file.");
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                History.Add("Save Image (RAW)", BuildDeviceLabel(), result, stopwatch.Elapsed);
+            }
         }
 
         private void ExportHex()
@@ -315,6 +412,21 @@ namespace OneWire.UI.Wpf.ViewModels
         private static string InputFilesDirectory => GetAppSubDirectory("InputFiles");
 
         private static string OutputFilesDirectory => GetAppSubDirectory("OutputFiles");
+
+        private string BuildDeviceLabel()
+        {
+            var sn = Identification?.SerialNumber?.Trim();
+            var probeSn = User?.ProbeSerialNumber?.Trim();
+
+            if (string.IsNullOrEmpty(sn) && string.IsNullOrEmpty(probeSn))
+                return "-";
+
+            var label = string.IsNullOrEmpty(sn) ? "-" : sn;
+            if (!string.IsNullOrEmpty(probeSn))
+                label += $" / Probe: {probeSn}";
+
+            return label;
+        }
 
         private string BuildDefaultFileName()
         {
