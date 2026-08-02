@@ -29,13 +29,15 @@
 
                         <ContentControl Content="{StaticResource WriteUserDataIconButton}" Focusable="False" />
 
-                        <Label Content=" "></Label>
+                        <Label Content=" " Visibility="{Binding ShowWriteEntireEepromButton, Converter={StaticResource BooleanToVisibilityConverter}}"></Label>
 
-                        <ContentControl Content="{StaticResource WriteEntireEepromIconButton}" Focusable="False" />
+                        <ContentControl Content="{StaticResource WriteEntireEepromIconButton}" Focusable="False"
+                                        Visibility="{Binding ShowWriteEntireEepromButton, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-                        <Label Content=" "></Label>
+                        <Label Content=" " Visibility="{Binding ShowFormatEepromButton, Converter={StaticResource BooleanToVisibilityConverter}}"></Label>
 
-                        <ContentControl Content="{StaticResource FormatEepromIconButton}" Focusable="False" />
+                        <ContentControl Content="{StaticResource FormatEepromIconButton}" Focusable="False"
+                                        Visibility="{Binding ShowFormatEepromButton, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </StackPanel>
                 </GroupBox>
             </StackPanel>

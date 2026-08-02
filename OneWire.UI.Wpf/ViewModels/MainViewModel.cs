@@ -66,6 +66,20 @@ namespace OneWire.UI.Wpf.ViewModels
             set { if (_showProbeUsageDate == value) return; _showProbeUsageDate = value; OnPropertyChanged(); }
         }
 
+        private bool _showWriteEntireEepromButton;
+        public bool ShowWriteEntireEepromButton
+        {
+            get => _showWriteEntireEepromButton;
+            set { if (_showWriteEntireEepromButton == value) return; _showWriteEntireEepromButton = value; OnPropertyChanged(); }
+        }
+
+        private bool _showFormatEepromButton;
+        public bool ShowFormatEepromButton
+        {
+            get => _showFormatEepromButton;
+            set { if (_showFormatEepromButton == value) return; _showFormatEepromButton = value; OnPropertyChanged(); }
+        }
+
         private bool _checkIdentificationCrc = true;
         public bool CheckIdentificationCrc
         {
@@ -122,6 +136,8 @@ namespace OneWire.UI.Wpf.ViewModels
             AllowEditIdentification = GetAppSettingBool("AllowEditIdentification", defaultValue: true);
             AllowEditCalibration = GetAppSettingBool("AllowEditCalibration", defaultValue: true);
             _showProbeUsageDate = GetAppSettingBool("ShowProbeUsageDate", defaultValue: true);
+            _showWriteEntireEepromButton = GetAppSettingBool("ShowWriteEntireEepromButton", defaultValue: true);
+            _showFormatEepromButton = GetAppSettingBool("ShowFormatEepromButton", defaultValue: true);
             _eraseFillByte = GetAppSettingByte("EraseFillByte", 0x00);
 
             _fileDialogService = fileDialogService;
