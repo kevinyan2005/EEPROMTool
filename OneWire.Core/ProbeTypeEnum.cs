@@ -15,8 +15,8 @@ namespace OneWire.Core
             new Dictionary<ProbeTypeEnum, string>
             {
                 { ProbeTypeEnum.FullFire33, "20893" },
-                { ProbeTypeEnum.FullFire16, "22022" },
-                { ProbeTypeEnum.SideFire33, "28091" },
+                { ProbeTypeEnum.FullFire16, "22002" },
+                { ProbeTypeEnum.SideFire33, "20891" },
             };
 
         public static string ToPartNumber(this ProbeTypeEnum probe) =>

@@ -209,25 +209,35 @@
                         <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding User.Schema}" Width="45"
                                  HorizontalAlignment="Left">
                         </TextBox>
-                        <StackPanel Grid.Row="4" Grid.Column="2" Orientation="Horizontal">
-                            <TextBox MinWidth="45" Text="{Binding User.PartNumber, Mode=OneWay}" IsReadOnly="True"></TextBox>
-                            <!-- Probe length: only FullFire33 and SideFire33 -->
-                            <TextBlock Text=" - " VerticalAlignment="Center"
-                                       Visibility="{Binding User.HasProbeLength, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                        <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal">
+                            <ComboBox Width="100" HorizontalAlignment="Left"
+                                      ItemsSource="{Binding User.AvailableProbes}"
+                                      SelectedItem="{Binding User.SelectedProbe, Mode=TwoWay}" />
+
+                            <TextBlock Text="     Size:" VerticalAlignment="Center"></TextBlock>
                             <ComboBox MinWidth="50"
                                       Visibility="{Binding User.HasProbeLength, Converter={StaticResource BooleanToVisibilityConverter}}"
                                       ItemsSource="{Binding User.AvailableProbeLengths}"
                                       SelectedItem="{Binding User.ProbeLength, Mode=TwoWay}" />
+
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="4" Grid.Column="2" Orientation="Horizontal">
+                            <TextBox MinWidth="45" Text="{Binding User.PartNumber, Mode=OneWay}" IsReadOnly="True" VerticalContentAlignment="Center"/>
+                            <!-- Probe length: only FullFire33 and SideFire33 -->
+                            <TextBlock Text=" - " VerticalAlignment="Center"
+                                       Visibility="{Binding User.HasProbeLength, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            <TextBox MinWidth="30" Text="{Binding User.ProbeLength}"
+                                     Visibility="{Binding User.HasProbeLength, Converter={StaticResource BooleanToVisibilityConverter}}"></TextBox>
                             <TextBlock Text=" - " VerticalAlignment="Center" />
                             <TextBlock Text="M" VerticalAlignment="Center" />
-                            <TextBox MinWidth="35"
-                                     MaxLength="4"
+                            <TextBox MinWidth="35" MaxLength="4" VerticalContentAlignment="Center"
                                      ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"
                                      Text="{Binding User.LotNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}">
                             </TextBox>
                             <TextBlock Text=" - " VerticalAlignment="Center" />
-                            <TextBox MinWidth="25"
-                                     MaxLength="2"
+                            <TextBox MinWidth="25" MaxLength="2" VerticalContentAlignment="Center"
                                      ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}"
                                      Text="{Binding User.Sequence, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}">
                             </TextBox>
@@ -239,9 +249,7 @@
                                     Language="en-CA"
                                     SelectedDateFormat="Short"
                                     SelectedDate="{Binding User.ManufactureDate, Mode=TwoWay, TargetNullValue={x:Null}}" />
-                        <ComboBox Grid.Row="2" Grid.Column="2" Width="100" HorizontalAlignment="Left"
-                                  ItemsSource="{Binding User.AvailableProbes}"
-                                  SelectedItem="{Binding User.SelectedProbe, Mode=TwoWay}" />
+                       
                         <TextBox Grid.Row="10" Grid.Column="2"
                                  Text="{Binding User.ProbeUsageDate, StringFormat={}{0:yyyy/MM/dd}, TargetNullValue=''}"
                                  IsReadOnly="True"
