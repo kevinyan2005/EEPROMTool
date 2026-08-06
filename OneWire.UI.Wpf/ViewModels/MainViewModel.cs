@@ -46,6 +46,7 @@ namespace OneWire.UI.Wpf.ViewModels
         private EepromData _eeprom;
         private byte[] _rawEepromBytes;
         private readonly byte _eraseFillByte;
+        private readonly ushort _userDataVersion;
 
         private bool _allowEditIdentification;
         public bool AllowEditIdentification
@@ -141,6 +142,7 @@ namespace OneWire.UI.Wpf.ViewModels
             _showWriteEntireEepromButton = GetAppSettingBool("ShowWriteEntireEepromButton", defaultValue: true);
             _showFormatEepromButton = GetAppSettingBool("ShowFormatEepromButton", defaultValue: true);
             _eraseFillByte = GetAppSettingByte("EraseFillByte", 0x00);
+            _userDataVersion = GetAppSettingUShort("UserDataVersion", 1);
 
             _fileDialogService = fileDialogService;
             _manager = manager;
@@ -152,7 +154,7 @@ namespace OneWire.UI.Wpf.ViewModels
             Identification = new IdentificationViewModel(_eeprom.Id);
             Calibration = new CalibrationViewModel(_eeprom.Calibration);
             User = new UserDataViewModel(_eeprom.User);
-            User.Schema = GetAppSettingUShort("UserDataVersion", 1);
+            User.Schema = _userDataVersion;
 
             _readEepromCommand = new RelayCommand(async () => await LoadMemoryAsync(), CanStartOperation);
             _writeEntireEepromCommand = new RelayCommand(async () => await WriteMemoryAsync(WriteMode.Entire), CanStartOperation);
@@ -186,7 +188,8 @@ namespace OneWire.UI.Wpf.ViewModels
             var result = "Success";
             try
             {
-                await ReadEepromInternalAsync();
+                if (!await ReadEepromInternalAsync())
+                    result = "Success (CRC check failed)";
             }
             catch (Exception ex)
             {
@@ -204,6 +207,8 @@ namespace OneWire.UI.Wpf.ViewModels
 
         private async Task WriteMemoryAsync(WriteMode mode)
         {
+            User.Schema = _userDataVersion;
+
             var (dialogTitle, message) = mode == WriteMode.UserDataOnly
                 ? ("Confirm Write", "Proceed with writing user data to EEPROM?")
                 : ("Confirm Write", "Proceed with writing entire EEPROM?");
@@ -306,7 +311,8 @@ namespace OneWire.UI.Wpf.ViewModels
             var success = true;
             try
             {
-                await ExecuteWriteAsync(mode);
+                if (!await ExecuteWriteAsync(mode))
+                    result = "Success (CRC check failed)";
             }
             catch (Exception ex)
             {
@@ -328,7 +334,7 @@ namespace OneWire.UI.Wpf.ViewModels
             return success;
         }
 
-        private async Task ExecuteWriteAsync(WriteMode mode)
+        private async Task<bool> ExecuteWriteAsync(WriteMode mode)
         {
             var progress = new Progress<int>(p => Progress = p);
             var bytes = await _manager.WriteAsync(_eeprom, mode, _eraseFillByte, progress);
@@ -337,9 +343,12 @@ namespace OneWire.UI.Wpf.ViewModels
             HexAsciiText = HexFormatter.FormatHexAscii(bytes);
 
             if (mode == WriteMode.Erase)
+            {
                 ClearUiState();
-            else
-                ParseEeprom(bytes);
+                return true;
+            }
+
+            return ParseEeprom(bytes);
         }
 
         private void LoadJson()
@@ -411,7 +420,8 @@ namespace OneWire.UI.Wpf.ViewModels
                 var bytes = _manager.LoadRawHex(path);
                 _rawEepromBytes = (byte[])bytes.Clone();
                 HexAsciiText = HexFormatter.FormatHexAscii(bytes);
-                ParseEeprom(bytes);
+                if (!ParseEeprom(bytes))
+                    result = "Success (CRC check failed)";
             }
             catch (Exception ex)
             {
@@ -503,14 +513,14 @@ namespace OneWire.UI.Wpf.ViewModels
             return string.IsNullOrEmpty(serial) ? timestamp : $"{serial}_{timestamp}";
         }
 
-        private async Task ReadEepromInternalAsync()
+        private async Task<bool> ReadEepromInternalAsync()
         {
             var progress = new Progress<int>(p => Progress = p);
             var bytes = await _manager.ReadRawAsync(progress);
             Progress = 0;
             _rawEepromBytes = (byte[])bytes.Clone();
             HexAsciiText = HexFormatter.FormatHexAscii(bytes);
-            ParseEeprom(bytes);
+            return ParseEeprom(bytes);
         }
 
         private CrcCheckOptions BuildCrcCheckOptions() => new CrcCheckOptions
@@ -520,12 +530,13 @@ namespace OneWire.UI.Wpf.ViewModels
             CheckUser = CheckUserCrc
         };
 
-        private void ParseEeprom(byte[] raw)
+        private bool ParseEeprom(byte[] raw)
         {
             try
             {
                 _eeprom = _manager.Decode(raw, BuildCrcCheckOptions());
                 ApplyEepromToViewModels();
+                return true;
             }
             catch (CrcValidationException ex)
             {
@@ -540,6 +551,7 @@ namespace OneWire.UI.Wpf.ViewModels
                     "CRC Validation Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
+                return false;
             }
             catch (Exception ex)
             {
