@@ -50,6 +50,10 @@
                         <Label Content=" "></Label>
 
                         <ContentControl Content="{StaticResource SaveRawTxtIconButton}" Focusable="False" />
+
+                        <Label Content=" "></Label>
+
+                        <ContentControl Content="{StaticResource ClearEepromDataIconButton}" Focusable="False" />
                     </StackPanel>
                 </GroupBox>
             </StackPanel>

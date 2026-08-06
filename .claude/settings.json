@@ -7,7 +7,13 @@
       "Bash(rm -f \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/ProgramNextTest.exe\" \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/HistoryTest.cs\" 2>/dev/null; echo done)",
       "Bash(powershell -NoProfile -Command \"Stop-Process -Id 15648 -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Get-Process -Id 15648 -ErrorAction SilentlyContinue\")",
       "Bash(powershell -NoProfile -Command \"Stop-Process -Id 1500 -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Get-Process -Id 1500 -ErrorAction SilentlyContinue\")",
-      "Bash(cp \"/c/local_depot/techDevelopment/kyan/G4/OneWireEepromTool/OneWire.UI.Wpf/bin/Debug/OneWire.UI.Wpf.exe\" \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/\" *)"
+      "Bash(cp \"/c/local_depot/techDevelopment/kyan/G4/OneWireEepromTool/OneWire.UI.Wpf/bin/Debug/OneWire.UI.Wpf.exe\" \"/c/Users/kyan/AppData/Local/Temp/claude/c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool/4096ae1d-b6b0-4631-832d-a2753c4c3af1/scratchpad/\" *)",
+      "Bash(where msbuild *)",
+      "Bash(\"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Professional\\\\MSBuild\\\\Current\\\\Bin\\\\MSBuild.exe\" OneWire.UI.Wpf\\\\OneWire.UI.Wpf.csproj /p:Configuration=Debug /nologo /v:minimal /t:Build)",
+      "Bash(\"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Professional\\\\MSBuild\\\\Current\\\\Bin\\\\MSBuild.exe\" \"OneWire.UI.Wpf/OneWire.UI.Wpf.csproj\" //p:Configuration=Debug //nologo //v:minimal //t:Build)",
+      "Bash(cd /d/local_depot/techDevelopment/kyan/G4/OneWireEepromTool 2>/dev/null; echo done)",
+      "Read(//d/local_depot/techDevelopment/kyan/G4/**)",
+      "PowerShell(msbuild OneWireEEPROMWpfApp.sln /p:Configuration=Debug /nologo /v:minimal /t:OneWire_UI_Wpf 2>&1)"
     ],
     "additionalDirectories": [
       "C:\\Users\\kyan\\AppData\\Local\\Temp\\claude\\c--local-depot-techDevelopment-kyan-G4-OneWireEepromTool\\4096ae1d-b6b0-4631-832d-a2753c4c3af1\\scratchpad\\logs",

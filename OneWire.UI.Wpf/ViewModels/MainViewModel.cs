@@ -37,6 +37,7 @@ namespace OneWire.UI.Wpf.ViewModels
         public ICommand ExportHexCommand { get; }
         public ICommand SaveRawTxtCommand { get; }
         public ICommand ExitCommand { get; }
+        public ICommand ClearEepromDataCommand { get; }
 
         private readonly RelayCommand _readEepromCommand;
         private readonly RelayCommand _writeEntireEepromCommand;
@@ -170,6 +171,7 @@ namespace OneWire.UI.Wpf.ViewModels
             ExportHexCommand = new RelayCommand(ExportHex);
             SaveRawTxtCommand = new RelayCommand(SaveRawTxt);
             ExitCommand = new RelayCommand(() => Application.Current.Shutdown());
+            ClearEepromDataCommand = new RelayCommand(ClearEepromData);
 
             _rawEepromBytes = Array.Empty<byte>();
         }
@@ -588,6 +590,12 @@ namespace OneWire.UI.Wpf.ViewModels
         private void ClearRawDataView() => HexAsciiText = string.Empty;
 
         private void OnPortDisconnected()
+        {
+            ClearUiState();
+            ClearRawDataView();
+        }
+
+        private void ClearEepromData()
         {
             ClearUiState();
             ClearRawDataView();
