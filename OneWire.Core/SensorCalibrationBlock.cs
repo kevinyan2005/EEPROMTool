@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using Newtonsoft.Json;
 using OneWire.Common;
 
 namespace OneWire.Core
@@ -13,6 +14,8 @@ namespace OneWire.Core
         public DateTime ManufactureDate { get; set; }  // 8 bytes
         public DateTime ExpiryDate { get; set; }       // 8 bytes
         public string GaugeType { get; set; }          // 2 bytes
+
+        [JsonConverter(typeof(HexUInt16JsonConverter))]
         public ushort Crc16 { get; set; }              // 2 bytes
 
         public byte[] ToBytes()

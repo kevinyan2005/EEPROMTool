@@ -57,6 +57,7 @@
     <Compile Include="EepromFileService.cs" />
     <Compile Include="EepromLayout.cs" />
     <Compile Include="EepromSerializer.cs" />
+    <Compile Include="HexUInt16JsonConverter.cs" />
     <Compile Include="IBlockWithCrc.cs" />
     <Compile Include="IEepromDataManager.cs" />
     <Compile Include="OneWireIdentificationBlock.cs" />

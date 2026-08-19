@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using Newtonsoft.Json;
 using OneWire.Common;
 
 namespace OneWire.Core
@@ -11,6 +12,8 @@ namespace OneWire.Core
         public ushort Schema { get; set; }
         public string ProbeSerialNumber { get; set; } = "";
         public DateTime ProbeExpiryDate { get; set; } = DateTime.MaxValue;
+
+        [JsonConverter(typeof(HexUInt16JsonConverter))]
         public ushort Crc16 { get; set; }
         public DateTime ProbeUsageDate { get; set; } = DateTime.MaxValue;
         public DateTime ProbeManufactureDate { get; set; } = DateTime.MaxValue;

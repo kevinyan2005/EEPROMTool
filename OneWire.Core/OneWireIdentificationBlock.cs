@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using Newtonsoft.Json;
 using OneWire.Common;
 
 namespace OneWire.Core
@@ -12,6 +13,8 @@ namespace OneWire.Core
         public string DataId { get; set; }           // 2 bytes EEPROM chip ID
         public string Model { get; set; }            // 16 bytes (ASCII), e.g. DS2431
         public string SerialNumber { get; set; }     // 16 bytes (ASCII)
+
+        [JsonConverter(typeof(HexUInt16JsonConverter))]
         public ushort Crc16 { get; set; }            // 2 bytes (calculated later)
 
         public byte[] ToBytes()
