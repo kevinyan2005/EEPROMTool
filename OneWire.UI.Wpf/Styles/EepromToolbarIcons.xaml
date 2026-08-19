@@ -61,13 +61,13 @@
                    Stroke="{StaticResource IconStrokeBrush}" StrokeThickness="1" Fill="White" />
     </Canvas>
 
-    <!-- Save EEPROM image: floppy disk with a bold downward arrow (application -> raw .txt file) -->
-    <Button x:Key="SaveRawTxtIconButton" x:Shared="False"
+    <!-- Save EEPROM image: floppy disk with a bold downward arrow (application -> JSON file) -->
+    <Button x:Key="SaveJsonIconButton" x:Shared="False"
             Width="32" Height="32" Padding="0" Margin="0"
             ToolTipService.ShowOnDisabled="True"
-            ToolTip="Save the current EEPROM image to a raw .txt file"
-            Command="{Binding SaveRawTxtCommand}"
-            AutomationProperties.AutomationId="SaveRawTxtButton">
+            ToolTip="Save the current EEPROM image to a JSON file"
+            Command="{Binding SaveJsonCommand}"
+            AutomationProperties.AutomationId="SaveJsonButton">
         <Viewbox Width="22" Height="22">
             <Grid Width="24" Height="24">
                 <ContentControl Content="{StaticResource FloppyDiskGlyph}" Focusable="False" IsTabStop="False" />
@@ -106,13 +106,13 @@
         </Viewbox>
     </Button>
 
-    <!-- Load EEPROM image: floppy disk with a bold upward arrow (raw .txt file -> application) -->
-    <Button x:Key="LoadRawTxtIconButton" x:Shared="False"
+    <!-- Load EEPROM image: floppy disk with a bold upward arrow (JSON file -> application) -->
+    <Button x:Key="LoadJsonIconButton" x:Shared="False"
             Width="32" Height="32" Padding="0" Margin="0"
             ToolTipService.ShowOnDisabled="True"
-            ToolTip="Load an EEPROM image from a raw .txt file"
-            Command="{Binding LoadRawTxtCommand}"
-            AutomationProperties.AutomationId="LoadRawTxtButton">
+            ToolTip="Load an EEPROM image from a JSON file"
+            Command="{Binding LoadJsonCommand}"
+            AutomationProperties.AutomationId="LoadJsonButton">
         <Viewbox Width="22" Height="22">
             <Grid Width="24" Height="24">
                 <ContentControl Content="{StaticResource FloppyDiskGlyph}" Focusable="False" IsTabStop="False" />

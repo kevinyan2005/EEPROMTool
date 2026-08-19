@@ -45,11 +45,11 @@
                     <StackPanel Orientation="Horizontal">
                         <Label Content=" "></Label>
 
-                        <ContentControl Content="{StaticResource LoadRawTxtIconButton}" Focusable="False" />
+                        <ContentControl Content="{StaticResource LoadJsonIconButton}" Focusable="False" />
 
                         <Label Content=" "></Label>
 
-                        <ContentControl Content="{StaticResource SaveRawTxtIconButton}" Focusable="False" />
+                        <ContentControl Content="{StaticResource SaveJsonIconButton}" Focusable="False" />
 
                         <Label Content=" "></Label>
 
@@ -235,6 +235,7 @@
                             <TextBlock Text=" - " VerticalAlignment="Center"
                                        Visibility="{Binding User.HasProbeLength, Converter={StaticResource BooleanToVisibilityConverter}}" />
                             <TextBox MinWidth="30" Text="{Binding User.ProbeLength}"
+                                     IsReadOnly="True"
                                      Visibility="{Binding User.HasProbeLength, Converter={StaticResource BooleanToVisibilityConverter}}"></TextBox>
                             <TextBlock Text=" - " VerticalAlignment="Center" />
                             <TextBlock Text="M" VerticalAlignment="Center" />
