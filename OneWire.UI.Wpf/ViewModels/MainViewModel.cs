@@ -179,6 +179,34 @@ namespace OneWire.UI.Wpf.ViewModels
                 History.Add("Read EEPROM", BuildDeviceLabel(), result, stopwatch.Elapsed);
                 IsBusy = false;
             }
+
+            AutoSaveJsonAfterRead();
+        }
+
+        /// <summary>
+        /// Automatically archives the just-read EEPROM image to a JSON file in <see cref="OutputFilesDirectory"/>
+        /// so every read is captured on disk without requiring a manual "Save JSON" action.
+        /// </summary>
+        private void AutoSaveJsonAfterRead()
+        {
+            var path = Path.Combine(OutputFilesDirectory, BuildDefaultFileName() + ".json");
+
+            var stopwatch = Stopwatch.StartNew();
+            var result = "Success";
+            try
+            {
+                _manager.SaveToJson(_eeprom, path);
+            }
+            catch (Exception ex)
+            {
+                result = $"Failed: {ex.Message}";
+                Logger.Error(ex, "Failed to auto-save EEPROM JSON file after read.");
+            }
+            finally
+            {
+                stopwatch.Stop();
+                History.Add("Save Image (JSON)", BuildDeviceLabel(), result, stopwatch.Elapsed);
+            }
         }
 
         private async Task WriteMemoryAsync(WriteMode mode)
