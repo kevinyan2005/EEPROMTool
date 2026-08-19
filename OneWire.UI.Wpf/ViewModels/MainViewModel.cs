@@ -49,40 +49,17 @@ namespace OneWire.UI.Wpf.ViewModels
         private readonly byte _eraseFillByte;
         private readonly ushort _userDataVersion;
 
-        private bool _allowEditIdentification;
-        public bool AllowEditIdentification
-        {
-            get => _allowEditIdentification;
-            set { if (_allowEditIdentification == value) return; _allowEditIdentification = value; OnPropertyChanged(); }
-        }
+        private readonly ApplicationMode _mode;
+        private readonly bool _showProbeUsageDate;
 
-        private bool _allowEditCalibration;
-        public bool AllowEditCalibration
-        {
-            get => _allowEditCalibration;
-            set { if (_allowEditCalibration == value) return; _allowEditCalibration = value; OnPropertyChanged(); }
-        }
-
-        private bool _showProbeUsageDate;
-        public bool ShowProbeUsageDate
-        {
-            get => _showProbeUsageDate;
-            set { if (_showProbeUsageDate == value) return; _showProbeUsageDate = value; OnPropertyChanged(); }
-        }
-
-        private bool _showWriteEntireEepromButton;
-        public bool ShowWriteEntireEepromButton
-        {
-            get => _showWriteEntireEepromButton;
-            set { if (_showWriteEntireEepromButton == value) return; _showWriteEntireEepromButton = value; OnPropertyChanged(); }
-        }
-
-        private bool _showFormatEepromButton;
-        public bool ShowFormatEepromButton
-        {
-            get => _showFormatEepromButton;
-            set { if (_showFormatEepromButton == value) return; _showFormatEepromButton = value; OnPropertyChanged(); }
-        }
+        public bool AllowEditIdentification => _mode == ApplicationMode.Developer;
+        public bool AllowEditCalibration => _mode == ApplicationMode.Developer;
+        public bool ShowProbeUsageDate => _showProbeUsageDate;
+        public bool ShowWriteEntireEepromButton => _mode == ApplicationMode.Developer;
+        public bool ShowFormatEepromButton => _mode == ApplicationMode.Developer;
+        public bool ShowIdentificationCrcCheckbox => _mode == ApplicationMode.Developer;
+        public bool ShowCalibrationCrcCheckbox => _mode == ApplicationMode.Developer;
+        public bool ShowUserCrcCheckbox => _mode == ApplicationMode.Developer;
 
         private bool _checkIdentificationCrc = true;
         public bool CheckIdentificationCrc
@@ -103,27 +80,6 @@ namespace OneWire.UI.Wpf.ViewModels
         {
             get => _checkUserCrc;
             set { if (_checkUserCrc == value) return; _checkUserCrc = value; OnPropertyChanged(); }
-        }
-
-        private bool _showIdentificationCrcCheckbox;
-        public bool ShowIdentificationCrcCheckbox
-        {
-            get => _showIdentificationCrcCheckbox;
-            set { if (_showIdentificationCrcCheckbox == value) return; _showIdentificationCrcCheckbox = value; OnPropertyChanged(); }
-        }
-
-        private bool _showCalibrationCrcCheckbox;
-        public bool ShowCalibrationCrcCheckbox
-        {
-            get => _showCalibrationCrcCheckbox;
-            set { if (_showCalibrationCrcCheckbox == value) return; _showCalibrationCrcCheckbox = value; OnPropertyChanged(); }
-        }
-
-        private bool _showUserCrcCheckbox;
-        public bool ShowUserCrcCheckbox
-        {
-            get => _showUserCrcCheckbox;
-            set { if (_showUserCrcCheckbox == value) return; _showUserCrcCheckbox = value; OnPropertyChanged(); }
         }
 
         private int _progress;
@@ -158,14 +114,8 @@ namespace OneWire.UI.Wpf.ViewModels
 
         public MainViewModel(IFileDialogService fileDialogService, IEepromDataManager manager)
         {
-            AllowEditIdentification = GetAppSettingBool("AllowEditIdentification", defaultValue: true);
-            AllowEditCalibration = GetAppSettingBool("AllowEditCalibration", defaultValue: true);
+            _mode = GetAppSettingApplicationMode("ApplicationMode", ApplicationMode.Production);
             _showProbeUsageDate = GetAppSettingBool("ShowProbeUsageDate", defaultValue: true);
-            _showWriteEntireEepromButton = GetAppSettingBool("ShowWriteEntireEepromButton", defaultValue: true);
-            _showFormatEepromButton = GetAppSettingBool("ShowFormatEepromButton", defaultValue: true);
-            _showIdentificationCrcCheckbox = GetAppSettingBool("ShowIdentificationCrcCheckbox", defaultValue: true);
-            _showCalibrationCrcCheckbox = GetAppSettingBool("ShowCalibrationCrcCheckbox", defaultValue: true);
-            _showUserCrcCheckbox = GetAppSettingBool("ShowUserCrcCheckbox", defaultValue: true);
             _eraseFillByte = GetAppSettingByte("EraseFillByte", 0x00);
             _userDataVersion = GetAppSettingUShort("UserDataVersion", 1);
 
@@ -634,6 +584,12 @@ namespace OneWire.UI.Wpf.ViewModels
             _writeEntireEepromCommand?.RaiseCanExecuteChanged();
             _writeUserDataCommand?.RaiseCanExecuteChanged();
             _eraseEepromCommand?.RaiseCanExecuteChanged();
+        }
+
+        private static ApplicationMode GetAppSettingApplicationMode(string key, ApplicationMode defaultValue)
+        {
+            var raw = ConfigurationManager.AppSettings[key];
+            return Enum.TryParse<ApplicationMode>(raw, ignoreCase: true, out var v) ? v : defaultValue;
         }
 
         private static bool GetAppSettingBool(string key, bool defaultValue)
