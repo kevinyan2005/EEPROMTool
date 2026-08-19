@@ -33,11 +33,13 @@ namespace OneWire.UI.Wpf.ViewModels
             if (loadFromData)
             {
                 _schema = model.Schema;
-                _probeUsageDate = model.ProbeUsageDate == default ? (DateTime?)null : model.ProbeUsageDate;
                 // Not persisted to JSON, so a freshly-loaded model still has its DateTime.MaxValue field default.
-                _probeManufactureDate = model.ProbeManufactureDate == default || model.ProbeManufactureDate == DateTime.MaxValue
-                    ? (DateTime?)null
-                    : model.ProbeManufactureDate;
+                _probeUsageDate = LooksUnset(model.ProbeUsageDate) ? (DateTime?)null : model.ProbeUsageDate;
+                // Not persisted to JSON, and not reliably written to the EEPROM either, so a chip
+                // read that comes back unset/invalid or a freshly-loaded model still at its field
+                // default should default to today rather than showing a sentinel date to the user.
+                _probeManufactureDate = LooksUnset(model.ProbeManufactureDate) ? DateTime.Today : model.ProbeManufactureDate;
+                _model.ProbeManufactureDate = _probeManufactureDate.Value;
                 _crc = model.Crc16;
                 // Initialize the Enum selection based on whatever string is in the model
                 SyncSelectedProbeFromPartNumber();
@@ -47,7 +49,10 @@ namespace OneWire.UI.Wpf.ViewModels
                 // Fields stay null, serial number remains empty string in model
                 _probeUsageDate = null;
                 _model.ProbeUsageDate = DateTime.MaxValue;
-                _probeManufactureDate = null;
+                // Default to today rather than leaving this unset, so an untouched manufacture date
+                // doesn't end up written to the EEPROM as the literal sentinel "9999-12-31".
+                _probeManufactureDate = DateTime.Today;
+                _model.ProbeManufactureDate = DateTime.Today;
                 _crc = null;
             }
         }
@@ -197,7 +202,8 @@ namespace OneWire.UI.Wpf.ViewModels
             {
                 if (_probeManufactureDate == value) return;
                 _probeManufactureDate = value;
-                _model.ProbeManufactureDate = value ?? DateTime.MaxValue;
+                // Default to today rather than the "9999-12-31" sentinel if the user clears the field.
+                _model.ProbeManufactureDate = value ?? DateTime.Today;
                 RecalculateExpiryDate();
                 OnPropertyChanged();
             }
@@ -206,10 +212,23 @@ namespace OneWire.UI.Wpf.ViewModels
         /// <summary>
         /// Read-only. Calculated as ManufactureDate + 2 years (FullFire16) or + 4 years (FullFire33/SideFire33).
         /// </summary>
-        public DateTime? ProbeExpiryDate =>
-            _probeManufactureDate.HasValue
-                ? _probeManufactureDate.Value.AddYears(HasProbeLength ? 4 : 2)
-                : (DateTime?)null;
+        public DateTime? ProbeExpiryDate
+        {
+            get
+            {
+                if (!_probeManufactureDate.HasValue) return null;
+                try
+                {
+                    return _probeManufactureDate.Value.AddYears(HasProbeLength ? 4 : 2);
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    // ManufactureDate is near DateTime.MaxValue (e.g. an unset/sentinel value) — the
+                    // offset year would fall outside the representable DateTime range.
+                    return null;
+                }
+            }
+        }
 
         public ushort? Schema
         {
@@ -308,6 +327,15 @@ namespace OneWire.UI.Wpf.ViewModels
         #endregion
 
         #region Helper Methods
+
+        /// <summary>
+        /// Treats a decoded vendor date as "not actually set" whenever its year sits at either edge
+        /// of the representable range. An exact-equality check against DateTime.MinValue/MaxValue
+        /// isn't enough here: an unprogrammed/erased EEPROM region can BCD-decode to a technically
+        /// valid but bogus date like 9999-12-31 00:00:00, which never equals MaxValue's time-of-day
+        /// (23:59:59.9999999) but is just as meaningless.
+        /// </summary>
+        private static bool LooksUnset(DateTime value) => value.Year <= 1 || value.Year >= 9999;
 
         private void SyncSelectedProbeFromPartNumber()
         {

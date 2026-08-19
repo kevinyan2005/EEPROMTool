@@ -190,23 +190,48 @@ namespace OneWire.UI.Wpf.ViewModels
         private void AutoSaveJsonAfterRead()
         {
             var path = Path.Combine(OutputFilesDirectory, BuildDefaultFileName() + ".json");
+            TrySaveEepromToJson(_eeprom, path, "Save Image (JSON)");
+        }
 
+        /// <summary>
+        /// Reads the EEPROM's raw contents into a standalone snapshot without touching the live view
+        /// models or the in-memory <see cref="_eeprom"/> — used to archive before/after state around a
+        /// write without disturbing pending edits or the currently displayed data.
+        /// </summary>
+        private async Task<(bool success, EepromData snapshot)> ReadEepromSnapshotAsync(string historyOperationName)
+        {
             var stopwatch = Stopwatch.StartNew();
             var result = "Success";
+            EepromData snapshot = null;
+            var success = true;
             try
             {
-                _manager.SaveToJson(_eeprom, path);
+                var progress = new Progress<int>(p => Progress = p);
+                var bytes = await _manager.ReadRawAsync(progress);
+                Progress = 0;
+
+                try
+                {
+                    snapshot = _manager.Decode(bytes, BuildCrcCheckOptions());
+                }
+                catch (CrcValidationException ex)
+                {
+                    snapshot = ex.EepromData;
+                    result = "Success (CRC check failed)";
+                }
             }
             catch (Exception ex)
             {
                 result = $"Failed: {ex.Message}";
-                Logger.Error(ex, "Failed to auto-save EEPROM JSON file after read.");
+                success = false;
+                Logger.Error(ex, $"{historyOperationName} failed.");
             }
             finally
             {
                 stopwatch.Stop();
-                History.Add("Save Image (JSON)", BuildDeviceLabel(), result, stopwatch.Elapsed);
+                History.Add(historyOperationName, BuildDeviceLabel(), result, stopwatch.Elapsed);
             }
+            return (success, snapshot);
         }
 
         private async Task WriteMemoryAsync(WriteMode mode)
@@ -239,7 +264,7 @@ namespace OneWire.UI.Wpf.ViewModels
         {
             while (true)
             {
-                var success = await WriteMemoryTrackedAsync(mode, operationName);
+                var success = await WriteMemoryWithSnapshotsAsync(mode, operationName);
                 if (!success) return;
 
                 var promptDialog = new ProgramNextEepromDialog
@@ -304,8 +329,52 @@ namespace OneWire.UI.Wpf.ViewModels
 
             if (dialog.ShowDialog() != true) return;
 
-            await WriteMemoryTrackedAsync(WriteMode.Erase, "Format EEPROM");
+            await WriteMemoryWithSnapshotsAsync(WriteMode.Erase, "Format EEPROM");
         }
+
+        /// <summary>
+        /// Wraps a hardware write with before/after JSON snapshots for audit purposes: reads the
+        /// EEPROM's current contents and archives them as "&lt;name&gt;_before.json" prior to writing,
+        /// executes the write, then — only if it succeeded — reads back and archives "&lt;name&gt;_after.json".
+        /// The pre-write read captures a standalone snapshot rather than refreshing the live view models,
+        /// since doing so would overwrite the pending edits this operation is about to write.
+        /// </summary>
+        private async Task<bool> WriteMemoryWithSnapshotsAsync(WriteMode mode, string operationName)
+        {
+            IsBusy = true;
+            try
+            {
+                var baseName = BuildDefaultFileName();
+
+                var (beforeReadOk, beforeSnapshot) = await ReadEepromSnapshotAsync($"Read EEPROM (Before {operationName})");
+                if (!beforeReadOk)
+                {
+                    MessageBox.Show(
+                        $"Could not read the EEPROM before writing. {operationName} was cancelled.",
+                        "Write Cancelled",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return false;
+                }
+                TrySaveEepromToJson(beforeSnapshot, BuildSnapshotPath(baseName, "before"), $"Save Image (JSON) - Before {operationName}");
+
+                if (!await WriteMemoryTrackedAsync(mode, operationName))
+                    return false;
+
+                var (afterReadOk, afterSnapshot) = await ReadEepromSnapshotAsync($"Read EEPROM (After {operationName})");
+                if (afterReadOk)
+                    TrySaveEepromToJson(afterSnapshot, BuildSnapshotPath(baseName, "after"), $"Save Image (JSON) - After {operationName}");
+
+                return true;
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private static string BuildSnapshotPath(string baseName, string suffix) =>
+            Path.Combine(OutputFilesDirectory, $"{baseName}_{suffix}.json");
 
         private async Task<bool> WriteMemoryTrackedAsync(WriteMode mode, string operationName)
         {
@@ -393,22 +462,46 @@ namespace OneWire.UI.Wpf.ViewModels
             var path = _fileDialogService.SaveFile("JSON files|*.json", BuildDefaultFileName(), OutputFilesDirectory);
             if (path == null) return;
 
+            SaveEepromToJsonOrThrow(_eeprom, path, "Save Image (JSON)");
+        }
+
+        /// <summary>
+        /// Core JSON export used by every save path (manual Save JSON, auto-save-after-read, and the
+        /// write workflow's before/after snapshots): saves, times, logs, and records a History entry,
+        /// then rethrows so a user-initiated save can surface the failure.
+        /// </summary>
+        private void SaveEepromToJsonOrThrow(EepromData data, string path, string historyLabel)
+        {
             var stopwatch = Stopwatch.StartNew();
             var result = "Success";
             try
             {
-                _manager.SaveToJson(_eeprom, path);
+                _manager.SaveToJson(data, path);
             }
             catch (Exception ex)
             {
                 result = $"Failed: {ex.Message}";
-                Logger.Error(ex, "Failed to save EEPROM JSON file.");
+                Logger.Error(ex, $"Failed to save EEPROM JSON file ({historyLabel}).");
                 throw;
             }
             finally
             {
                 stopwatch.Stop();
-                History.Add("Save Image (JSON)", BuildDeviceLabel(), result, stopwatch.Elapsed);
+                History.Add(historyLabel, BuildDeviceLabel(), result, stopwatch.Elapsed);
+            }
+        }
+
+        /// <summary>Non-throwing wrapper for automatic/background saves that must not interrupt their caller.</summary>
+        private bool TrySaveEepromToJson(EepromData data, string path, string historyLabel)
+        {
+            try
+            {
+                SaveEepromToJsonOrThrow(data, path, historyLabel);
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
 

@@ -15,11 +15,18 @@ namespace OneWire.Core
 
         [JsonConverter(typeof(HexUInt16JsonConverter))]
         public ushort Crc16 { get; set; }
+
+        /// <summary>Internal-only — not persisted to JSON, though it is still read from and written to the EEPROM.</summary>
+        [JsonIgnore]
         public DateTime ProbeUsageDate { get; set; } = DateTime.MaxValue;
 
-        /// <summary>Not persisted to JSON — this field is never actually written to the EEPROM.</summary>
+        /// <summary>
+        /// Not persisted to JSON — this field is never actually written to the EEPROM.
+        /// Defaults to the current date rather than DateTime.MaxValue, since MaxValue was ending up
+        /// BCD-encoded as a literal "9999-12-31" whenever the field was left untouched.
+        /// </summary>
         [JsonIgnore]
-        public DateTime ProbeManufactureDate { get; set; } = DateTime.MaxValue;
+        public DateTime ProbeManufactureDate { get; set; } = DateTime.Today;
 
         public byte[] ToBytes()
         {
