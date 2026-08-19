@@ -104,7 +104,8 @@
                             <TextBlock Text="{Binding Identification.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue='', Mode=OneWay}"
                                        VerticalAlignment="Center" />
                             <CheckBox Content="Check CRC" Margin="8,0,0,0" VerticalAlignment="Center"
-                                      IsChecked="{Binding CheckIdentificationCrc}" />
+                                      IsChecked="{Binding CheckIdentificationCrc}"
+                                      Visibility="{Binding ShowIdentificationCrcCheckbox, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         </StackPanel>
 
                     </Grid>
@@ -155,7 +156,8 @@
                                 <TextBlock Text="{Binding Calibration.Crc, StringFormat={}{0:X4}, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
                                            VerticalAlignment="Center" />
                                 <CheckBox Content="Check CRC" Margin="8,0,0,0" VerticalAlignment="Center"
-                                          IsChecked="{Binding CheckCalibrationCrc}" />
+                                          IsChecked="{Binding CheckCalibrationCrc}"
+                                          Visibility="{Binding ShowCalibrationCrcCheckbox, Converter={StaticResource BooleanToVisibilityConverter}}" />
                             </StackPanel>
 
                         </Grid>
@@ -262,7 +264,8 @@
                             <TextBlock Text="{Binding User.Crc, StringFormat={}{0:X4}, TargetNullValue=''}"
                                        VerticalAlignment="Center" />
                             <CheckBox Content="Check CRC" Margin="8,0,0,0" VerticalAlignment="Center"
-                                      IsChecked="{Binding CheckUserCrc}" />
+                                      IsChecked="{Binding CheckUserCrc}"
+                                      Visibility="{Binding ShowUserCrcCheckbox, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         </StackPanel>
                     </Grid>
                 </GroupBox>

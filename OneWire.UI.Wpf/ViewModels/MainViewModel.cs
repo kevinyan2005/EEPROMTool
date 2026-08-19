@@ -105,6 +105,27 @@ namespace OneWire.UI.Wpf.ViewModels
             set { if (_checkUserCrc == value) return; _checkUserCrc = value; OnPropertyChanged(); }
         }
 
+        private bool _showIdentificationCrcCheckbox;
+        public bool ShowIdentificationCrcCheckbox
+        {
+            get => _showIdentificationCrcCheckbox;
+            set { if (_showIdentificationCrcCheckbox == value) return; _showIdentificationCrcCheckbox = value; OnPropertyChanged(); }
+        }
+
+        private bool _showCalibrationCrcCheckbox;
+        public bool ShowCalibrationCrcCheckbox
+        {
+            get => _showCalibrationCrcCheckbox;
+            set { if (_showCalibrationCrcCheckbox == value) return; _showCalibrationCrcCheckbox = value; OnPropertyChanged(); }
+        }
+
+        private bool _showUserCrcCheckbox;
+        public bool ShowUserCrcCheckbox
+        {
+            get => _showUserCrcCheckbox;
+            set { if (_showUserCrcCheckbox == value) return; _showUserCrcCheckbox = value; OnPropertyChanged(); }
+        }
+
         private int _progress;
         public int Progress
         {
@@ -142,6 +163,9 @@ namespace OneWire.UI.Wpf.ViewModels
             _showProbeUsageDate = GetAppSettingBool("ShowProbeUsageDate", defaultValue: true);
             _showWriteEntireEepromButton = GetAppSettingBool("ShowWriteEntireEepromButton", defaultValue: true);
             _showFormatEepromButton = GetAppSettingBool("ShowFormatEepromButton", defaultValue: true);
+            _showIdentificationCrcCheckbox = GetAppSettingBool("ShowIdentificationCrcCheckbox", defaultValue: true);
+            _showCalibrationCrcCheckbox = GetAppSettingBool("ShowCalibrationCrcCheckbox", defaultValue: true);
+            _showUserCrcCheckbox = GetAppSettingBool("ShowUserCrcCheckbox", defaultValue: true);
             _eraseFillByte = GetAppSettingByte("EraseFillByte", 0x00);
             _userDataVersion = GetAppSettingUShort("UserDataVersion", 1);
 
