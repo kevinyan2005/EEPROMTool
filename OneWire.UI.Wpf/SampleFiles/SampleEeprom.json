@@ -24,7 +24,6 @@
     "ProbeSerialNumber": "FF33-33-A001-0007",
     "ProbeExpiryDate": "2028-01-15T00:00:00",
     "Crc16": "0x37D2",
-    "ProbeUsageDate": "9999-12-31T23:59:59",
-    "ProbeManufactureDate": "2026-01-15T00:00:00"
+    "ProbeUsageDate": "9999-12-31T23:59:59"
   }
 }

@@ -16,6 +16,9 @@ namespace OneWire.Core
         [JsonConverter(typeof(HexUInt16JsonConverter))]
         public ushort Crc16 { get; set; }
         public DateTime ProbeUsageDate { get; set; } = DateTime.MaxValue;
+
+        /// <summary>Not persisted to JSON — this field is never actually written to the EEPROM.</summary>
+        [JsonIgnore]
         public DateTime ProbeManufactureDate { get; set; } = DateTime.MaxValue;
 
         public byte[] ToBytes()

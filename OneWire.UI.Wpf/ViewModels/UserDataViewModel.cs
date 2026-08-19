@@ -34,7 +34,10 @@ namespace OneWire.UI.Wpf.ViewModels
             {
                 _schema = model.Schema;
                 _probeUsageDate = model.ProbeUsageDate == default ? (DateTime?)null : model.ProbeUsageDate;
-                _probeManufactureDate = model.ProbeManufactureDate == default ? (DateTime?)null : model.ProbeManufactureDate;
+                // Not persisted to JSON, so a freshly-loaded model still has its DateTime.MaxValue field default.
+                _probeManufactureDate = model.ProbeManufactureDate == default || model.ProbeManufactureDate == DateTime.MaxValue
+                    ? (DateTime?)null
+                    : model.ProbeManufactureDate;
                 _crc = model.Crc16;
                 // Initialize the Enum selection based on whatever string is in the model
                 SyncSelectedProbeFromPartNumber();
