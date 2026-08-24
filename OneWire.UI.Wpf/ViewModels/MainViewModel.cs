@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -344,6 +346,16 @@ namespace OneWire.UI.Wpf.ViewModels
             IsBusy = true;
             try
             {
+                if (mode != WriteMode.Erase)
+                {
+                    var validationErrors = ValidateProbeDataBeforeEepromWrite();
+                    if (validationErrors.Count > 0)
+                    {
+                        HandleDataIntegrityValidationFailure(operationName, validationErrors);
+                        return false;
+                    }
+                }
+
                 var baseName = BuildDefaultFileName();
 
                 var (beforeReadOk, beforeSnapshot) = await ReadEepromSnapshotAsync($"Read EEPROM (Before {operationName})");
@@ -375,6 +387,50 @@ namespace OneWire.UI.Wpf.ViewModels
 
         private static string BuildSnapshotPath(string baseName, string suffix) =>
             Path.Combine(OutputFilesDirectory, $"{baseName}_{suffix}.json");
+
+        /// <summary>
+        /// Validates the in-memory UserData block against required invariants before it is
+        /// committed to the EEPROM. Returns an empty list when every check passes.
+        /// </summary>
+        private List<string> ValidateProbeDataBeforeEepromWrite()
+        {
+            const ushort requiredVersion = 1;
+            var user = _eeprom.User;
+            var errors = new List<string>();
+
+            if (user.Schema != requiredVersion)
+                errors.Add($"UserData.Version must equal {requiredVersion} (current value: {user.Schema}).");
+
+            if (string.IsNullOrWhiteSpace(user.ProbeSerialNumber))
+                errors.Add("ProbeSerialNumber must not be null, empty, or whitespace.");
+
+            if (IsUninitializedProbeExpiryDate(user.ProbeExpiryDate))
+                errors.Add("ProbeExpiryDate must not be the uninitialized value (9999-12-31T23:59:59).");
+
+            return errors;
+        }
+
+        private static bool IsUninitializedProbeExpiryDate(DateTime expiry) =>
+            expiry.Year == 9999 && expiry.Month == 12 && expiry.Day == 31 &&
+            expiry.Hour == 23 && expiry.Minute == 59 && expiry.Second == 59;
+
+        private void HandleDataIntegrityValidationFailure(string operationName, List<string> errors)
+        {
+            var details = string.Join(Environment.NewLine, errors.Select(e => "- " + e));
+            Logger.Error($"Data integrity validation failed for {operationName}: {string.Join(" | ", errors)}");
+
+            MessageBox.Show(
+                $"{operationName} was cancelled because the following data integrity check(s) failed:{Environment.NewLine}{Environment.NewLine}{details}",
+                "Data Integrity Check Failed",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+
+            History.Add(
+                $"{operationName} (Aborted)",
+                BuildDeviceLabel(),
+                $"Failed: Data integrity validation failed - {string.Join("; ", errors)}",
+                TimeSpan.Zero);
+        }
 
         private async Task<bool> WriteMemoryTrackedAsync(WriteMode mode, string operationName)
         {
