@@ -221,7 +221,7 @@
                                       ItemsSource="{Binding User.AvailableProbes}"
                                       SelectedItem="{Binding User.SelectedProbe, Mode=TwoWay}" />
 
-                            <TextBlock Text="     Size:" VerticalAlignment="Center"></TextBlock>
+                            <TextBlock Text="    Size: " VerticalAlignment="Center"></TextBlock>
                             <ComboBox MinWidth="50"
                                       Visibility="{Binding User.HasProbeLength, Converter={StaticResource BooleanToVisibilityConverter}}"
                                       ItemsSource="{Binding User.AvailableProbeLengths}"

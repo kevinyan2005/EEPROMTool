@@ -23,13 +23,13 @@
                                     Width="160" />
                 <DataGridTextColumn Header="Operation"
                                      Binding="{Binding Operation}"
-                                     Width="180" />
+                                     Width="250" />
                 <DataGridTextColumn Header="Device"
                                      Binding="{Binding Device}"
                                      Width="*" />
                 <DataGridTextColumn Header="Result"
                                      Binding="{Binding Result}"
-                                     Width="150" />
+                                     Width="100" />
                 <DataGridTextColumn Header="Duration"
                                      Binding="{Binding Duration, StringFormat={}{0:hh\\:mm\\:ss\\.fff}}"
                                      Width="120" />

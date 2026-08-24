@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,6 +13,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
@@ -44,6 +46,7 @@ namespace OneWire.UI.Wpf
             {
                 InitializeComponent();
                 Closing += MainWindow_Closing;
+                SourceInitialized += MainWindow_SourceInitialized;
             }
             catch (Exception e)
             {
@@ -72,6 +75,28 @@ namespace OneWire.UI.Wpf
                 vm.OnAppClosing();
                 // Optionally: e.Cancel = vm.ShouldCancelClose;
             }
+        }
+
+        // WPF's ResizeMode can't disable just the Maximize button (it's all-or-nothing with
+        // resizing), so the maximize box is removed directly via the native window style,
+        // leaving WS_THICKFRAME (resizing) and the minimize/close boxes untouched.
+        private void MainWindow_SourceInitialized(object sender, EventArgs e)
+        {
+            var hwnd = new WindowInteropHelper(this).Handle;
+            var style = NativeMethods.GetWindowLong(hwnd, NativeMethods.GWL_STYLE);
+            NativeMethods.SetWindowLong(hwnd, NativeMethods.GWL_STYLE, style & ~NativeMethods.WS_MAXIMIZEBOX);
+        }
+
+        private static class NativeMethods
+        {
+            public const int GWL_STYLE = -16;
+            public const int WS_MAXIMIZEBOX = 0x10000;
+
+            [DllImport("user32.dll")]
+            public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+            [DllImport("user32.dll")]
+            public static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
         }
     }
 }
