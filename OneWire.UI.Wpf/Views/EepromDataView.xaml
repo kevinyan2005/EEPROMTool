@@ -15,8 +15,21 @@
         <StackPanel>
             <StackPanel Orientation="Horizontal">
                 <local:ConnectivityView DataContext="{Binding Connectivity}" />
-                <GroupBox Header="EEPROM Read/Write Operation" IsEnabled="{Binding Connectivity.IsPortOpen}" Padding="0,6,0,3"
+                <GroupBox IsEnabled="{Binding Connectivity.IsPortOpen}" Padding="0,6,0,3"
                           Margin="5,0,0,0">
+                    <GroupBox.Header>
+                        <TextBlock Text="EEPROM Read/Write Operation">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter Property="Foreground" Value="{x:Static SystemColors.GrayTextBrush}" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </GroupBox.Header>
                     <StackPanel Orientation="Horizontal">
                         <CheckBox Content="Override Speed" VerticalAlignment="Center"
                                   IsChecked="{Binding Connectivity.UseOverrideSpeed}"
@@ -213,7 +226,7 @@
                         <TextBlock Grid.Row="12" Grid.Column="0" Text="Checksum:"></TextBlock>
 
                         <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding User.Schema}" Width="45"
-                                 HorizontalAlignment="Left">
+                                 HorizontalAlignment="Left" IsReadOnly="True">
                         </TextBox>
 
                         <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal">
